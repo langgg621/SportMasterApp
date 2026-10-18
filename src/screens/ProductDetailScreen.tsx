@@ -13,7 +13,7 @@ import { productController } from '../controllers/productController';
 import { cartController } from '../controllers/cartController';
 import FloatingNavBar from '../components/FloatingNavBar';
 import SizeGuideModal from '../components/SizeGuideModal';
-
+import Entypo from '@expo/vector-icons/Entypo';
 export default function ProductDetailScreen({ route, navigation }: { route: any; navigation: any }) {
   const { productId } = route.params || { productId: 'p1' };
   const product = productController.getProductDetails(productId);
@@ -27,6 +27,8 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
     technology: false,
     reviews: false,
     questions: false,
+    amortization:false,
+    description:false
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -46,7 +48,51 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
     setAddedSuccess(true);
     setTimeout(() => setAddedSuccess(false), 2000);
   };
+  // State quản lý tab size đang chọn (RUS, EUR, US, UK)
+  const [selectedTab, setSelectedTab] = useState<'RUS' | 'EUR' | 'US' | 'UK'>('RUS');
 
+  // Dữ liệu bảng quy đổi chi tiết tương ứng cho từng loại size
+  const sizeMapping: Record<string, { size: string; cm: string }[]> = {
+    RUS: [
+      { size: '38', cm: '24.5' },
+      { size: '39', cm: '25' },
+      { size: '39.5', cm: '25.5' },
+      { size: '40', cm: '26' },
+      { size: '41', cm: '26.5' },
+      { size: '41.5', cm: '27.5' },
+      { size: '42', cm: '28' },
+    ],
+    EUR: [
+      { size: '38.5', cm: '24.5' },
+      { size: '39', cm: '25' },
+      { size: '40', cm: '25.5' },
+      { size: '40.5', cm: '26' },
+      { size: '41.5', cm: '26.5' },
+      { size: '42.5', cm: '27.5' },
+      { size: '43', cm: '28' },
+    ],
+    US: [
+      { size: '6.5', cm: '24.5' },
+      { size: '7', cm: '25' },
+      { size: '7.5', cm: '25.5' },
+      { size: '8', cm: '26' },
+      { size: '8.5', cm: '26.5' },
+      { size: '9.5', cm: '27.5' },
+      { size: '10', cm: '28' },
+    ],
+    UK: [
+      { size: '5.5', cm: '24.5' },
+      { size: '6', cm: '25' },
+      { size: '6.5', cm: '25.5' },
+      { size: '7', cm: '26' },
+      { size: '7.5', cm: '26.5' },
+      { size: '8.5', cm: '27.5' },
+      { size: '9', cm: '28' },
+    ],
+  };
+
+  // Lấy danh sách size hiện tại dựa vào tab đang chọn
+  const currentSizes = sizeMapping[selectedTab] || sizeMapping['RUS'];
   return (
     <SafeAreaView style={styles.container} >
       {/* Header Bar */}
@@ -122,28 +168,51 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
             <Ionicons name="chevron-forward" size={16} color="#888" />
           </View>
 
-          {/* Size Selector */}
+          {/* Size Selector Header (Tab chuyển đổi RUS, EUR, US, UK) */}
           <View style={styles.sizeSectionHeader}>
             <View style={{ flexDirection: 'row', gap: 16 }}>
-              <Text style={styles.sizeTabActive}>RUS</Text>
-              <Text style={styles.sizeTabInactive}>EUR</Text>
-              <Text style={styles.sizeTabInactive}>US</Text>
-              <Text style={styles.sizeTabInactive}>UK</Text>
+              {(['RUS', 'EUR', 'US', 'UK'] as const).map((tab) => {
+                const isActive = selectedTab === tab;
+                return (
+                  <TouchableOpacity 
+                    key={tab} 
+                    onPress={() => {
+                      setSelectedTab(tab);
+                      // Tự động chọn phần tử đầu tiên của tab mới làm mặc định
+                      setSelectedSize(sizeMapping[tab][0].size);
+                    }}
+                  >
+                    <Text style={[styles.sizeTabInactive, isActive && styles.sizeTabActive]}>
+                      {tab}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
-            <TouchableOpacity onPress={() => setShowSizeGuide(true)}><Text style={styles.sizeGuideLink}>Таблица размеров</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowSizeGuide(true)}>
+              <Text style={styles.sizeGuideLink}>Таблица размеров</Text>
+            </TouchableOpacity>
           </View>
 
+          {/* Danh sách các chip size hiển thị theo tab đã chọn */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sizeRow}>
-            {(product.sizes || ['39.5', '40', '41', '41.5', '42']).map((size: string) => (
-              <TouchableOpacity
-                key={size}
-                style={[styles.sizeChip, selectedSize === size && styles.selectedSizeChip]}
-                onPress={() => setSelectedSize(size)}
-              >
-                <Text style={[styles.sizeText, selectedSize === size && styles.selectedSizeText]}>{size}</Text>
-                <Text style={[styles.sizeSubText, selectedSize === size && styles.selectedSubText]}>26 cm</Text>
-              </TouchableOpacity>
-            ))}
+            {currentSizes.map((item) => {
+              const isSelected = selectedSize === item.size;
+              return (
+                <TouchableOpacity
+                  key={item.size}
+                  style={[styles.sizeChip, isSelected && styles.selectedSizeChip]}
+                  onPress={() => setSelectedSize(item.size)}
+                >
+                  <Text style={[styles.sizeText, isSelected && styles.selectedSizeText]}>
+                    {item.size}
+                  </Text>
+                  <Text style={[styles.sizeSubText, isSelected && styles.selectedSubText]}>
+                    {item.cm} см
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
 
           <TouchableOpacity style={styles.measureLinkRow}>
@@ -152,28 +221,56 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
 
           {/* Stock Notice Box */}
           <View style={styles.stockNoticeBox}>
-            <Ionicons name="location-outline" size={18} color="#005bff" style={{ marginRight: 8 }} />
+            <Entypo name="ruler" size={18} color="#bcbec1" style={{ marginRight: 8 }} />
             <Text style={styles.stockNoticeText}>Для отображения наличия выберите размер</Text>
           </View>
 
           {/* --- CÁC MỤC THÔNG TIN CHI TIẾT --- */}
           
-          {/* 1. Описание */}
+          {/* 1. Описание (Accordion) */}
           <View style={styles.sectionDivider} />
-          <Text style={styles.sectionTitle}>Описание</Text>
-          <Text style={styles.sectionBodyText}>
-            {product.description || 'Классический силуэт кроссовок ST Runner v3, дополненный функциональной отделкой задника, не оставит равнодушным истинного ценителя спортивного стиля.'}
-          </Text>
-
-          {/* 2. Амортизация */}
-          <View style={styles.sectionDivider} />
-          <Text style={styles.sectionTitle}>Амортизация</Text>
-          <Text style={styles.sectionBodyText}>
-            Упругая стелька из материала SoftFoam+ эффективно гасит ударные нагрузки.
-          </Text>
-          <TouchableOpacity style={styles.showMoreBtn}>
-            <Text style={styles.showMoreText}>Показать полностью</Text>
+          <TouchableOpacity 
+            style={styles.accordionHeader} 
+            onPress={() => toggleSection('description')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.sectionTitle}>Описание</Text>
+            <Ionicons 
+              name={expandedSections.description ? "chevron-up" : "chevron-down"} 
+              size={20} 
+              color="#111" 
+            />
           </TouchableOpacity>
+          {expandedSections.description && (
+            <Text style={styles.sectionBodyText}>
+              {product.description || 'Классический силуэт кроссовок ST Runner v3, дополненный функциональной отделкой задника, не оставит равнодушным истинного ценителя спортивного стиля.'}
+            </Text>
+          )}
+
+          {/* 2. Амортизация (Accordion) */}
+          <View style={styles.sectionDivider} />
+          <TouchableOpacity 
+            style={styles.accordionHeader} 
+            onPress={() => toggleSection('amortization')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.sectionTitle}>Амортизация</Text>
+            <Ionicons 
+              name={expandedSections.amortization ? "chevron-up" : "chevron-down"} 
+              size={20} 
+              color="#111" 
+            />
+          </TouchableOpacity>
+          {expandedSections.amortization && (
+            <View>
+              <Text style={styles.sectionBodyText}>
+                Упругая стелька из материала SoftFoam+ эффективно гасит ударные нагрузки.
+              </Text>
+              <TouchableOpacity style={styles.showMoreBtn}>
+                <Text style={styles.showMoreText}>Показать полностью</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* 3. Характеристики */}
           <View style={styles.sectionDivider} />
@@ -193,7 +290,7 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
           {expandedSections.characteristics && (
             <View style={styles.accordionContent}>
               <View style={styles.charRow}>
-                <Text style={styles.charLabel}>Артикул</Text>
+                <Text style={styles.subGroupTitle}>Артикул</Text>
                 <Text style={styles.charValueLink}>Штрихкод</Text>
               </View>
               <Text style={styles.skuText}>{product.id || '384855MPOP-04-7'}</Text>
@@ -233,7 +330,7 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
             onPress={() => toggleSection('reviews')}
             activeOpacity={0.8}
           >
-            <Text style={styles.sectionTitle}>Отзывы (3412)</Text>
+            <Text style={styles.sectionTitle}>Отзывы</Text>
             <Ionicons 
               name={expandedSections.reviews ? "chevron-up" : "chevron-down"} 
               size={20} 
@@ -241,7 +338,7 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
             />
           </TouchableOpacity>
           {expandedSections.reviews && (
-            <Text style={styles.reviewSnippet}>
+            <Text style={styles.sectionBodyText}>
               Удобные кроссовки с мягкой амортизирующей стелькой, которые не натирают и снижают нагрузку на суставы при длительной ходьбе...
             </Text>
           )}
@@ -253,7 +350,7 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
             onPress={() => toggleSection('questions')}
             activeOpacity={0.8}
           >
-            <Text style={styles.sectionTitle}>Вопросы о товаре (36)</Text>
+            <Text style={styles.sectionTitle}>Вопросы о товаре </Text>
             <Ionicons 
               name={expandedSections.questions ? "chevron-up" : "chevron-down"} 
               size={20} 
@@ -339,31 +436,31 @@ const styles = StyleSheet.create({
   sizeTabInactive: { fontSize: 16, fontWeight: 'bold', color: '#aaa' },
   sizeGuideLink: { fontSize: 13, color: '#005bff', fontWeight: '600' },
   sizeRow: { flexDirection: 'row', marginBottom: 12 },
-  sizeChip: { width: 68, height: 56, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12, marginRight: 8 },
+  sizeChip: { width: 68, height: 56, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, marginRight: 8 },
   selectedSizeChip: { borderColor: '#005bff', backgroundColor: '#eef3ff' },
-  sizeText: { fontSize: 15, fontWeight: 'bold', color: '#111' },
+  sizeText: { fontSize: 16, fontWeight: 'bold', color: '#111' },
   selectedSizeText: { color: '#005bff' },
-  sizeSubText: { fontSize: 11, color: '#888', marginTop: 2 },
+  sizeSubText: { fontSize: 14, color: '#888', marginTop: 2 },
   selectedSubText: { color: '#005bff' },
   measureLinkRow: { marginBottom: 16 },
   measureLinkText: { fontSize: 13, color: '#005bff', fontWeight: '600' },
-  stockNoticeBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef3ff', padding: 14, borderRadius: 16, marginBottom: 20 },
-  stockNoticeText: { fontSize: 13, color: '#005bff', fontWeight: '600' },
+  stockNoticeBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e7eceb75', padding: 18, borderRadius: 16, marginBottom: 20 },
+  stockNoticeText: { fontSize: 18, color: '#787a7d', marginHorizontal:20},
   sectionDivider: { height: 1, backgroundColor: '#eee', marginVertical: 16 },
   
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 8 },
-  sectionBodyText: { fontSize: 14, color: '#444', lineHeight: 20 },
+  sectionTitle: { fontSize: 24, fontWeight: '600', color: '#111', marginBottom: 8 },
+  sectionBodyText: { fontSize: 18, color: '#444', lineHeight: 24 },
   showMoreBtn: { marginTop: 10 },
   showMoreText: { fontSize: 14, color: '#005bff', fontWeight: '600' },
   accordionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   
   accordionContent: { marginTop: 10 },
   charRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
-  charLabel: { fontSize: 14, color: '#666' },
-  charValue: { fontSize: 14, fontWeight: '600', color: '#111' },
+  charLabel: { fontSize: 16, color: '#666' },
+  charValue: { fontSize: 16, fontWeight: '600', color: '#111' },
   charValueLink: { fontSize: 14, fontWeight: '600', color: '#005bff' },
   skuText: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 10 },
-  subGroupTitle: { fontSize: 15, fontWeight: 'bold', color: '#111', marginTop: 12, marginBottom: 6 },
+  subGroupTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginTop: 12, marginBottom: 6 },
 
   reviewSnippet: { fontSize: 13, color: '#555', lineHeight: 18, marginTop: 6 },
 
