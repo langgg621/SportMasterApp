@@ -34,4 +34,5 @@ export const orderController = {
   getOrderDetail(orderNumber: string): Order | undefined {
     return orderAction.getOrderByNumber(orderNumber);
   },
+  
 };

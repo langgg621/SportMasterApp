@@ -8,145 +8,288 @@ import {
   SafeAreaView,
   Switch,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function FilterScreen({ navigation }: { navigation: any }) {
-  const [isDeliveryChecked, setIsDeliveryChecked] = useState(false);
-  const [selectedColors, setSelectedColors] = useState<string[]>(['Белый']);
-  const [selectedTechs, setSelectedTechs] = useState<string[]>(['+ADD DRY (Water Repellent)']);
+  // --- STATES BỘ LỌC ---
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(['Кроссовки']);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(['39.5']);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedSports, setSelectedSports] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
+  const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
 
-  const colors = [
-    { id: 'c1', name: 'Белый', hex: '#fff' },
-    { id: 'c2', name: 'Бежевый', hex: '#f5f0e1' },
-    { id: 'c3', name: 'Розовый', hex: '#ffc0cb' },
-    { id: 'c4', name: 'Серый', hex: '#808080' },
-    { id: 'c5', name: 'Черный', hex: '#000' },
-  ];
+  // Tùy chọn Checkbox
+  const [discountOnly, setDiscountOnly] = useState(false);
+  const [exclusiveOnly, setExclusiveOnly] = useState(false);
+  const [premiumOnly, setPremiumOnly] = useState(false);
+  const [newBrand, setNewBrand] = useState(false);
 
-  const technologies = [
-    '+ADD DRY (Water Repellent)',
-    'Water-resistant',
-    '3M',
-  ];
-
-  const toggleColor = (name: string) => {
-    if (selectedColors.includes(name)) {
-      setSelectedColors(selectedColors.filter(c => c !== name));
+  // Hàm toggle chọn chip đa năng
+  const toggleChip = (item: string, list: string[], setList: (val: string[]) => void) => {
+    if (list.includes(item)) {
+      setList(list.filter(i => i !== item));
     } else {
-      setSelectedColors([...selectedColors, name]);
+      setList([...list, item]);
     }
   };
 
-  const toggleTech = (name: string) => {
-    if (selectedTechs.includes(name)) {
-      setSelectedTechs(selectedTechs.filter(t => t !== name));
-    } else {
-      setSelectedTechs([...selectedTechs, name]);
-    }
-  };
-
-  const handleReset = () => {
-    setSelectedColors([]);
-    setSelectedTechs([]);
-    setIsDeliveryChecked(false);
-  };
+  // --- MẢNG DỮ LIỆU DỰ MẪU ---
+  const productTypes = ['Кроссовки', 'Кроссовки высокие', 'Кроссовки высокие утепленные'];
+  const sizes = ['34', '34.5', '35', '35.5', '36', '36.5', '37', '37.5', '38', '38.5', '39', '39.5', '40', '41', '42'];
+  const brands = ['361°', 'ASICS', 'Adidas', 'Altra', "Arc'teryx", 'Athlex', 'Blackstone', 'Bmai', 'Brooks'];
+  const sports = ['Баскетбол', 'Бег', 'Водный туризм', 'Волейбол', 'Падел-теннис', 'Пляж', 'Походы'];
+  const colors = ['Бежевый', 'Белый', 'Бирюзовый', 'Бордовый', 'Васильковый', 'Голубой'];
+  const seasons = ['Всесезонный', 'Демисезон', 'Лето', 'Зима'];
+  const technologies = ['Ortholite', 'Abzorb®', 'Adiwear', 'CLOUDFOAM', 'SoftFoam+'];
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.closeIcon}>✕</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
+          <Ionicons name="close-outline" size={28} color="#111" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Фильтр</Text>
-        <TouchableOpacity onPress={handleReset}>
-          <Text style={styles.resetText}>Сбросить</Text>
-        </TouchableOpacity>
+        <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        {/* Selected Chips Active Bar */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.activeChipsRow}>
-          {selectedColors.map(c => (
-            <View key={c} style={styles.activeChip}>
-              <Text style={styles.activeChipText}>{c}</Text>
-              <TouchableOpacity onPress={() => toggleColor(c)}><Text style={styles.chipClose}> ✕</Text></TouchableOpacity>
-            </View>
-          ))}
-          {selectedTechs.map(t => (
-            <View key={t} style={styles.activeChip}>
-              <Text style={styles.activeChipText}>{t}</Text>
-              <TouchableOpacity onPress={() => toggleTech(t)}><Text style={styles.chipClose}> ✕</Text></TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* Доставка */}
-        <View style={styles.sectionRow}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
+        {/* Địa chỉ nhận hàng / Самовывоз */}
+        <TouchableOpacity style={styles.listItemRow}>
           <View>
-            <Text style={styles.sectionTitle}>Доставка</Text>
-            <Text style={styles.subAddress}>Томск, Буяновский переулок, 3А</Text>
+            <Text style={styles.listItemLabel}>Доставка</Text>
+            <Text style={styles.listItemSub}>Томск, Буяновский переулок, 3А</Text>
           </View>
-          <Switch
-            value={isDeliveryChecked}
-            onValueChange={setIsDeliveryChecked}
-            trackColor={{ false: '#d1d1d6', true: '#005bff' }}
-          />
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* Самовывоз */}
-        <TouchableOpacity style={styles.navRow}>
-          <Text style={styles.sectionTitle}>Самовывоз</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Ionicons name="chevron-forward" size={18} color="#aaa" />
         </TouchableOpacity>
 
-        <View style={styles.divider} />
+        <TouchableOpacity style={styles.listItemRow}>
+          <Text style={styles.listItemLabel}>Самовывоз</Text>
+          <Ionicons name="chevron-forward" size={18} color="#aaa" />
+        </TouchableOpacity>
 
-        {/* Цвет */}
-        <Text style={styles.groupTitle}>Цвет</Text>
-        <View style={styles.chipGrid}>
-          {colors.map(col => {
-            const isSelected = selectedColors.includes(col.name);
-            return (
-              <TouchableOpacity
-                key={col.id}
-                style={[styles.filterChip, isSelected && styles.selectedFilterChip]}
-                onPress={() => toggleColor(col.name)}
-              >
-                <View style={[styles.colorDot, { backgroundColor: col.hex, borderWidth: col.name === 'Белый' ? 1 : 0, borderColor: '#ccc' }]} />
-                <Text style={[styles.filterChipText, isSelected && styles.selectedFilterChipText]}>{col.name}</Text>
-                {isSelected && <Text style={styles.chipRemoveX}> ✕</Text>}
-              </TouchableOpacity>
-            );
-          })}
+        <View style={styles.checkboxRow}>
+          <Text style={styles.checkboxLabel}>Товары Спортмастер</Text>
+          <Switch value={false} onValueChange={() => {}} trackColor={{ false: '#e0e0e0', true: '#005bff' }} />
         </View>
 
-        <View style={styles.divider} />
+        <View style={styles.sectionDivider} />
+
+        {/* Khoảng giá (Цена) */}
+        <View style={styles.sectionPadding}>
+          <Text style={styles.sectionTitle}>Цена</Text>
+          <View style={styles.priceInputRow}>
+            <View style={styles.priceBox}>
+              <Text style={styles.priceSubLabel}>От</Text>
+              <Text style={styles.priceValueText}>1 799 ₽</Text>
+            </View>
+            <View style={styles.priceDash} />
+            <View style={styles.priceBox}>
+              <Text style={styles.priceSubLabel}>До</Text>
+              <Text style={styles.priceValueText}>110 344 ₽</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        {/* Вид товара */}
+        <View style={styles.sectionPadding}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.sectionTitle}>Вид товара</Text>
+            <TouchableOpacity><Text style={styles.allLink}>Все</Text></TouchableOpacity>
+          </View>
+          <View style={styles.chipWrapContainer}>
+            {productTypes.map(item => {
+              const active = selectedTypes.includes(item);
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.chip, active && styles.chipActive]}
+                  onPress={() => toggleChip(item, selectedTypes, setSelectedTypes)}
+                >
+                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        {/* Размер */}
+        <View style={styles.sectionPadding}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.sectionTitle}>Размер</Text>
+            <TouchableOpacity><Text style={styles.allLink}>Все</Text></TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {sizes.map(item => {
+              const active = selectedSizes.includes(item);
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.sizeChip, active && styles.sizeChipActive]}
+                  onPress={() => toggleChip(item, selectedSizes, setSelectedSizes)}
+                >
+                  <Text style={[styles.sizeChipText, active && styles.sizeChipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        {/* Бренд */}
+        <View style={styles.sectionPadding}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.sectionTitle}>Бренд</Text>
+            <TouchableOpacity><Text style={styles.allLink}>Все</Text></TouchableOpacity>
+          </View>
+          <View style={styles.chipWrapContainer}>
+            {brands.map(item => {
+              const active = selectedBrands.includes(item);
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.chip, active && styles.chipActive]}
+                  onPress={() => toggleChip(item, selectedBrands, setSelectedBrands)}
+                >
+                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.checkboxRow}>
+          <Text style={styles.checkboxLabel}>Новые бренды</Text>
+          <Switch value={newBrand} onValueChange={setNewBrand} trackColor={{ false: '#e0e0e0', true: '#005bff' }} />
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        {/* Вид спорта */}
+        <View style={styles.sectionPadding}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.sectionTitle}>Вид спорта</Text>
+            <TouchableOpacity><Text style={styles.allLink}>Все</Text></TouchableOpacity>
+          </View>
+          <View style={styles.chipWrapContainer}>
+            {sports.map(item => {
+              const active = selectedSports.includes(item);
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.chip, active && styles.chipActive]}
+                  onPress={() => toggleChip(item, selectedSports, setSelectedSports)}
+                >
+                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        {/* Цвет */}
+        <View style={styles.sectionPadding}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.sectionTitle}>Цвет</Text>
+            <TouchableOpacity><Text style={styles.allLink}>Все</Text></TouchableOpacity>
+          </View>
+          <View style={styles.chipWrapContainer}>
+            {colors.map(item => {
+              const active = selectedColors.includes(item);
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.chip, active && styles.chipActive]}
+                  onPress={() => toggleChip(item, selectedColors, setSelectedColors)}
+                >
+                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        {/* Сезон */}
+        <View style={styles.sectionPadding}>
+          <Text style={styles.sectionTitle}>Сезон</Text>
+          <View style={styles.chipWrapContainer}>
+            {seasons.map(item => {
+              const active = selectedSeasons.includes(item);
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.chip, active && styles.chipActive]}
+                  onPress={() => toggleChip(item, selectedSeasons, setSelectedSeasons)}
+                >
+                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        {/* Nút Checkbox bổ sung */}
+        <View style={styles.checkboxRow}>
+          <Text style={styles.checkboxLabel}>Товары со скидкой</Text>
+          <Switch value={discountOnly} onValueChange={setDiscountOnly} trackColor={{ false: '#e0e0e0', true: '#005bff' }} />
+        </View>
+
+        <View style={styles.checkboxRow}>
+          <Text style={styles.checkboxLabel}>Только у нас</Text>
+          <Switch value={exclusiveOnly} onValueChange={setExclusiveOnly} trackColor={{ false: '#e0e0e0', true: '#005bff' }} />
+        </View>
+
+        <View style={styles.checkboxRow}>
+          <Text style={styles.checkboxLabel}>Премиум</Text>
+          <Switch value={premiumOnly} onValueChange={setPremiumOnly} trackColor={{ false: '#e0e0e0', true: '#005bff' }} />
+        </View>
+
+        <View style={styles.sectionDivider} />
 
         {/* Технологии */}
-        <Text style={styles.groupTitle}>Технологии</Text>
-        <View style={styles.chipGrid}>
-          {technologies.map(tech => {
-            const isSelected = selectedTechs.includes(tech);
-            return (
-              <TouchableOpacity
-                key={tech}
-                style={[styles.filterChip, isSelected && styles.selectedFilterChip]}
-                onPress={() => toggleTech(tech)}
-              >
-                <Text style={[styles.filterChipText, isSelected && styles.selectedFilterChipText]}>{tech}</Text>
-                {isSelected && <Text style={styles.chipRemoveX}> ✕</Text>}
-              </TouchableOpacity>
-            );
-          })}
+        <View style={styles.sectionPadding}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.sectionTitle}>Технологии</Text>
+            <TouchableOpacity><Text style={styles.allLink}>Все</Text></TouchableOpacity>
+          </View>
+          <View style={styles.chipWrapContainer}>
+            {technologies.map(item => {
+              const active = selectedTechnologies.includes(item);
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.chip, active && styles.chipActive]}
+                  onPress={() => toggleChip(item, selectedTechnologies, setSelectedTechnologies)}
+                >
+                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       </ScrollView>
 
-      {/* Footer Apply Button */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.applyBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.applyBtnText}>Показать 1 товар</Text>
+      {/* Thanh cố định nút "Показать 5810 товаров" ở đáy */}
+      <View style={styles.bottomBarContainer}>
+        <TouchableOpacity 
+          style={styles.submitBtn} 
+          activeOpacity={0.8}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.submitBtnText}>Показать 5 810 товаров</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -155,30 +298,114 @@ export default function FilterScreen({ navigation }: { navigation: any }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderColor: '#eee' },
-  closeIcon: { fontSize: 18, color: '#333' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
-  resetText: { fontSize: 14, color: '#666' },
-  body: { padding: 16 },
-  activeChipsRow: { flexDirection: 'row', marginBottom: 16 },
-  activeChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#005bff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8 },
-  activeChipText: { color: '#fff', fontSize: 13, fontWeight: '500' },
-  chipClose: { color: '#fff', fontSize: 12 },
-  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#111' },
-  subAddress: { fontSize: 12, color: '#005bff', marginTop: 2 },
-  divider: { height: 1, backgroundColor: '#eee', marginVertical: 14 },
-  navRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-  chevron: { fontSize: 20, color: '#888' },
-  groupTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 10 },
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  filterChip: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, marginRight: 8, marginBottom: 8 },
-  selectedFilterChip: { backgroundColor: '#005bff', borderColor: '#005bff' },
-  filterChipText: { fontSize: 13, color: '#333' },
-  selectedFilterChipText: { color: '#fff' },
-  colorDot: { width: 14, height: 14, borderRadius: 7, marginRight: 6 },
-  chipRemoveX: { color: '#fff', fontSize: 11 },
-  footer: { padding: 16, borderTopWidth: 1, borderColor: '#eee', backgroundColor: '#fff' },
-  applyBtn: { backgroundColor: '#005bff', paddingVertical: 14, borderRadius: 8, alignItems: 'center' },
-  applyBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  closeBtn: { padding: 4 },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#111' },
+  
+  sectionPadding: { paddingHorizontal: 16, paddingTop: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 12 },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  allLink: { fontSize: 14, color: '#888', fontWeight: '500' },
+  sectionDivider: { height: 1, backgroundColor: '#f0f0f0', marginVertical: 12 },
+
+  listItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  listItemLabel: { fontSize: 16, fontWeight: '600', color: '#111' },
+  listItemSub: { fontSize: 13, color: '#005bff', marginTop: 2 },
+
+  checkboxRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  checkboxLabel: { fontSize: 16, fontWeight: '500', color: '#111' },
+
+  /* Input khoảng giá */
+  priceInputRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  priceBox: {
+    flex: 1,
+    backgroundColor: '#f6f6f8',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  priceSubLabel: { fontSize: 12, color: '#888' },
+  priceValueText: { fontSize: 16, fontWeight: 'bold', color: '#111', marginTop: 2 },
+  priceDash: { width: 10, height: 2, backgroundColor: '#ccc' },
+
+  /* Các thẻ Chip lựa chọn */
+  chipWrapContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    backgroundColor: '#f6f6f8',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f6f6f8',
+  },
+  chipActive: {
+    backgroundColor: '#eef3ff',
+    borderColor: '#005bff',
+  },
+  chipText: { fontSize: 14, color: '#333', fontWeight: '500' },
+  chipTextActive: { color: '#005bff', fontWeight: 'bold' },
+
+  /* Chip kích thước vuông */
+  sizeChip: {
+    width: 48,
+    height: 44,
+    backgroundColor: '#f6f6f8',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#f6f6f8',
+  },
+  sizeChipActive: {
+    backgroundColor: '#eef3ff',
+    borderColor: '#005bff',
+  },
+  sizeChipText: { fontSize: 15, fontWeight: '600', color: '#111' },
+  sizeChipTextActive: { color: '#005bff' },
+
+  /* Thanh Nút ở đáy */
+  bottomBarContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
+    borderTopWidth: 1,
+    borderColor: '#eee',
+  },
+  submitBtn: {
+    backgroundColor: '#005bff',
+    borderRadius: 12,
+    height: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

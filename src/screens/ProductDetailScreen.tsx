@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   SafeAreaView,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { productController } from '../controllers/productController';
@@ -14,26 +15,56 @@ import { cartController } from '../controllers/cartController';
 import FloatingNavBar from '../components/FloatingNavBar';
 import SizeGuideModal from '../components/SizeGuideModal';
 import Entypo from '@expo/vector-icons/Entypo';
+
 export default function ProductDetailScreen({ route, navigation }: { route: any; navigation: any }) {
   const { productId } = route.params || { productId: 'p1' };
-  const product = productController.getProductDetails(productId);
+  const product = productController.  getProductDetails(productId);
 
-  const [selectedSize, setSelectedSize] = useState(product?.sizes ? product.sizes[0] : '39.5');
-  const [addedSuccess, setAddedSuccess] = useState(false);
+  const [selectedSize, setSelectedSize] = useState('38');
   const [showSizeGuide, setShowSizeGuide] = useState(false);
-  // Trạng thái mở/đóng (Accordion) cho các mục tiêu đề
-  const [expandedSections, setExpandedSections] = useState({
-    characteristics: true,
-    technology: false,
-    reviews: false,
-    questions: false,
-    amortization:false,
-    description:false
-  });
+  
+  // State quản lý Toast và Modal giỏ hàng
+  const [showToast, setShowToast] = useState(false);
+  const [showCartModal, setShowCartModal] = useState(false);
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  // State lưu trữ giỏ hàng hiện tại
+  const [cartState, setCartState] = useState<any>({ items: [] });
+  // Trạng thái mở/đóng (Accordion) cho các mục
+    const [expandedSections, setExpandedSections] = useState({
+      description: true,
+      amortization: true,
+      characteristics: true,
+      technology: false,
+      reviews: false,
+      questions: false,
+    });
+
+    const toggleSection = (section: keyof typeof expandedSections) => {
+      setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
+  // Cập nhật trạng thái giỏ hàng từ cartController.getCartState()
+  const refreshCart = () => {
+    try {
+      const currentCart = cartController.getCartState();
+      setCartState(currentCart || { items: [] });
+    } catch (e) {
+      setCartState({ items: [] });
+    }
   };
+
+  useEffect(() => {
+    refreshCart();
+  }, [showToast, showCartModal]);
+
+  // Tự động tắt Toast thông báo sau 5 giây
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   if (!product) {
     return (
@@ -43,15 +74,69 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
     );
   }
 
+  // Danh sách các sản phẩm đang có trong giỏ hàng
+  const cartItems = cartState?.items || [];
+
+  // Tìm sản phẩm hiện tại trong giỏ hàng theo ID và Size
+  const cartItem = cartItems.find(
+    (item: any) => item?.product?.id === product.id && item?.size === selectedSize
+  );
+  const currentQuantity = cartItem ? cartItem.quantity : 0;
+
+  // Tính tổng số lượng hiển thị trên FloatingNavBar
+  const totalCartCount = cartItems.reduce((sum: number, item: any) => sum + (item?.quantity || 0), 0);
+
+  // Danh sách sản phẩm mua kèm thường xuyên
+  const frequentlyBoughtProducts = [
+    {
+      id: 'fb1',
+      name: 'Влажные салфетки для обуви Reloa',
+      price: '70 ₽',
+      oldPrice: '99 ₽',
+      discount: '-29%',
+      rating: '4.9 (4257)',
+      image: 'https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=400',
+    },
+    {
+      id: 'fb2',
+      name: 'Носки FILA, 2 пары',
+      price: '280 ₽',
+      oldPrice: '399 ₽',
+      discount: '-30%',
+      rating: '4.9 (6542)',
+      image: 'https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=400',
+    },
+    {
+      id: 'fb3',
+      name: 'Спрей-водоотталкивающий для обуви',
+      price: '450 ₽',
+      rating: '4.8 (910)',
+      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
+    },
+  ];
+
+  // Xử lý khi bấm nút "В корзину"
   const handleAddToCart = () => {
     cartController.addProductToCart(product, 1, selectedSize);
-    setAddedSuccess(true);
-    setTimeout(() => setAddedSuccess(false), 2000);
+    refreshCart();
+    setShowToast(true);
+    setShowCartModal(true);
   };
-  // State quản lý tab size đang chọn (RUS, EUR, US, UK)
+
+  // Thay đổi số lượng qua nút + / - ở thanh đáy
+  const handleUpdateQuantity = (newQty: number) => {
+    if (!cartItem) return;
+    if (newQty <= 0) {
+      cartController.removeItem(cartItem.id);
+    } else {
+      cartController.changeItemQuantity(cartItem.id, newQty);
+    }
+    refreshCart();
+  };
+
+  // State quản lý Tab kích thước
   const [selectedTab, setSelectedTab] = useState<'RUS' | 'EUR' | 'US' | 'UK'>('RUS');
 
-  // Dữ liệu bảng quy đổi chi tiết tương ứng cho từng loại size
   const sizeMapping: Record<string, { size: string; cm: string }[]> = {
     RUS: [
       { size: '38', cm: '24.5' },
@@ -91,10 +176,10 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
     ],
   };
 
-  // Lấy danh sách size hiện tại dựa vào tab đang chọn
   const currentSizes = sizeMapping[selectedTab] || sizeMapping['RUS'];
+
   return (
-    <SafeAreaView style={styles.container} >
+    <SafeAreaView style={styles.container}>
       {/* Header Bar */}
       <View style={styles.headerBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -106,7 +191,6 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
         </View>
       </View>
 
-      {/* Tăng paddingBottom để nội dung không bị che bởi thanh giá và FloatingNavBar */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 160 }}>
         {/* Product Image */}
         <View style={styles.imageContainer}>
@@ -147,13 +231,20 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
           <View style={styles.personalPriceCard}>
             <View style={styles.rowBetween}>
               <Text style={styles.personalLabel}>Персональная цена</Text>
-              <Ionicons name="information-circle-outline" size={16} color="#005bff" />
+              <Ionicons name="information-circle-outline" size={16} color="#ffffff" />
             </View>
             <View style={styles.priceRow}>
               <Text style={styles.currentPrice}>{product.price} ₽</Text>
               {product.oldPrice && <Text style={styles.oldPrice}>{product.oldPrice} ₽</Text>}
             </View>
           </View>
+
+          {/* TOAST THÔNG BÁO TÁCH BIỆT (Chữ trắng nền đen, tự ẩn sau 5s) */}
+          {showToast && (
+            <View style={styles.toastBanner}>
+              <Text style={styles.toastBannerText}>Товар добавлен в корзину</Text>
+            </View>
+          )}
 
           {/* Bonus Info Bar */}
           <View style={styles.bonusInfoBox}>
@@ -168,7 +259,7 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
             <Ionicons name="chevron-forward" size={16} color="#888" />
           </View>
 
-          {/* Size Selector Header (Tab chuyển đổi RUS, EUR, US, UK) */}
+          {/* Size Selector Header */}
           <View style={styles.sizeSectionHeader}>
             <View style={{ flexDirection: 'row', gap: 16 }}>
               {(['RUS', 'EUR', 'US', 'UK'] as const).map((tab) => {
@@ -178,7 +269,6 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
                     key={tab} 
                     onPress={() => {
                       setSelectedTab(tab);
-                      // Tự động chọn phần tử đầu tiên của tab mới làm mặc định
                       setSelectedSize(sizeMapping[tab][0].size);
                     }}
                   >
@@ -194,7 +284,7 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
             </TouchableOpacity>
           </View>
 
-          {/* Danh sách các chip size hiển thị theo tab đã chọn */}
+          {/* Size List */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sizeRow}>
             {currentSizes.map((item) => {
               const isSelected = selectedSize === item.size;
@@ -225,9 +315,9 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
             <Text style={styles.stockNoticeText}>Для отображения наличия выберите размер</Text>
           </View>
 
-          {/* --- CÁC MỤC THÔNG TIN CHI TIẾT --- */}
+          {/* --- ACCORDION SECTIONS --- */}
           
-          {/* 1. Описание (Accordion) */}
+          {/* 1. Описание */}
           <View style={styles.sectionDivider} />
           <TouchableOpacity 
             style={styles.accordionHeader} 
@@ -247,7 +337,7 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
             </Text>
           )}
 
-          {/* 2. Амортизация (Accordion) */}
+          {/* 2. Амортизация */}
           <View style={styles.sectionDivider} />
           <TouchableOpacity 
             style={styles.accordionHeader} 
@@ -350,7 +440,7 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
             onPress={() => toggleSection('questions')}
             activeOpacity={0.8}
           >
-            <Text style={styles.sectionTitle}>Вопросы о товаре </Text>
+            <Text style={styles.sectionTitle}>Вопросы о товаре</Text>
             <Ionicons 
               name={expandedSections.questions ? "chevron-up" : "chevron-down"} 
               size={20} 
@@ -361,33 +451,126 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
         </View>
       </ScrollView>
 
-      {/* Vùng chứa cố định ở đáy: Thanh Giá + Nút Thêm vào giỏ nằm ngay TRÊN FloatingNavBar */}
+      {/* Vùng chứa cố định ở đáy */}
       <View style={styles.footerContainer}>
         <View style={styles.floatingPricePill}>
-          <View>
-            {product.oldPrice && <Text style={styles.pillOldPrice}>{product.oldPrice} ₽</Text>}
-            <Text style={styles.pillPrice}>{product.price} ₽</Text>
-          </View>
-          <TouchableOpacity style={styles.pillAddToCartBtn} onPress={handleAddToCart}>
-            <Text style={styles.pillAddToCartText}>В корзину</Text>
-          </TouchableOpacity>
+          {currentQuantity > 0 ? (
+            <View style={styles.addedStateRow}>
+              <View style={styles.quantityCounter}>
+                <TouchableOpacity 
+                  style={styles.qtyBtn} 
+                  onPress={() => handleUpdateQuantity(currentQuantity - 1)}
+                >
+                  <Text style={styles.qtyBtnText}>—</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.quantityText}>{currentQuantity}</Text>
+
+                <TouchableOpacity 
+                  style={styles.qtyBtn} 
+                  onPress={() => handleUpdateQuantity(currentQuantity + 1)}
+                >
+                  <Text style={styles.qtyBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.goToCartBtn} 
+                onPress={() => navigation.navigate('MainTabs', { screen: 'CartTab' })}
+              >
+                <Text style={styles.goToCartText}>Перейти в корзину</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <View>
+                {product.oldPrice && <Text style={styles.pillOldPrice}>{product.oldPrice} ₽</Text>}
+                <Text style={styles.pillPrice}>{product.price} ₽</Text>
+              </View>
+              <TouchableOpacity style={styles.pillAddToCartBtn} onPress={handleAddToCart}>
+                <Text style={styles.pillAddToCartText}>В корзину</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
-        {/* FloatingNavBar tích hợp dưới cùng */}
+        {/* FloatingNavBar với badge giỏ hàng liên tục */}
         <FloatingNavBar 
           activeTab="Главная" 
+          cartCount={totalCartCount}
           onTabPress={(tab) => {
-            if (tab === 'Главная') navigation.navigate('HomeTab');
-            if (tab === 'Каталог') navigation.navigate('CatalogTab');
-            if (tab === 'Сервисы') navigation.navigate('ServicesTab');
-            if (tab === 'Корзина') navigation.navigate('CartTab');
-            if (tab === 'Профиль') navigation.navigate('ProfileTab');
+            if (tab === 'Главная') navigation.navigate('MainTabs', { screen: 'HomeTab' });
+            if (tab === 'Каталог') navigation.navigate('MainTabs', { screen: 'CatelogyTab' });
+            if (tab === 'Сервисы') navigation.navigate('MainTabs', { screen: 'ServicesTab' });
+            if (tab === 'Корзина') navigation.navigate('MainTabs', { screen: 'CartTab' });
+            if (tab === 'Профиль') navigation.navigate('MainTabs', { screen: 'ProfileTab' });
           }}
           onStorePress={() => {}}
         />
-        
       </View>
+
+      {/* Modal Bảng kích cỡ */}
       <SizeGuideModal visible={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
+
+      {/* MODAL GỢI Ý SẢN PHẨM MUA KÈM */}
+      {showCartModal && (
+        <View style={styles.cartModalOverlay}>
+          <TouchableWithoutFeedback onPress={() => setShowCartModal(false)}>
+            <View style={styles.modalBackdropTouch} />
+          </TouchableWithoutFeedback>
+
+          <View style={styles.cartModalContent}>
+            <TouchableOpacity onPress={() => setShowCartModal(false)} style={{ alignItems: 'center', width: '100%' }}>
+              <View style={styles.modalHandleBar} />
+            </TouchableOpacity>
+
+            <Text style={styles.modalTitle}>С этим товаром часто покупают</Text>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScrollContainer}>
+              {frequentlyBoughtProducts.map((p) => (
+                <View key={p.id} style={styles.productCard}>
+                  <View style={styles.productImageWrapper}>
+                    <Image source={{ uri: p.image }} style={styles.productImg} />
+                    <View style={styles.floatingActions}>
+                      <TouchableOpacity style={styles.actionIconBtn}>
+                        <Ionicons name="heart-outline" size={16} color="#666" />
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.actionIconBtn}>
+                        <Ionicons name="scale-outline" size={16} color="#666" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={styles.productDetailsRow}>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.priceContainer}>
+                        <Text style={styles.productPrice}>{p.price}</Text>
+                      </View>
+                      <View style={styles.priceContainer}>
+                        {p.oldPrice && <Text style={styles.productOldPrice}>{p.oldPrice}</Text>}
+                        {p.discount && <Text style={styles.productDiscount}>{p.discount}</Text>}
+                      </View>
+                      <Text style={styles.productName} numberOfLines={2}>{p.name}</Text>
+                      <Text style={styles.ratingText}><Text style={{ color: '#086ee7' }}>★</Text> {p.rating}</Text>
+                    </View>
+
+                    <TouchableOpacity style={styles.blueCartBtn}>
+                      <Ionicons name="cart-outline" size={18} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity 
+              style={styles.continueShoppingBtn} 
+              onPress={() => setShowCartModal(false)}
+            >
+              <Text style={styles.continueShoppingText}>Продолжить покупки</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -420,12 +603,28 @@ const styles = StyleSheet.create({
   ratingScore: { fontSize: 14, fontWeight: 'bold', color: '#111' },
   reviewsCount: { fontSize: 13, color: '#888' },
   productTitle: { fontSize: 18, fontWeight: '600', color: '#111', marginBottom: 16 },
+  
   personalPriceCard: { backgroundColor: '#005bff', padding: 14, borderRadius: 16, marginBottom: 12 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   personalLabel: { fontSize: 18, color: '#ffffff', fontWeight: '500' },
   priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
   currentPrice: { fontSize: 24, fontWeight: 'bold', color: '#ffffff' },
   oldPrice: { fontSize: 16, color: '#d2cdcd', textDecorationLine: 'line-through' },
+  
+  toastBanner: {
+    backgroundColor: '#1c2230',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  toastBannerText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+
   bonusInfoBox: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f4f6f8', padding: 14, borderRadius: 16, marginBottom: 12 },
   bonusInfoText: { fontSize: 14, fontWeight: '600', color: '#111' },
   splayBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f4f6f8', padding: 14, borderRadius: 16, marginBottom: 20, gap: 8 },
@@ -445,7 +644,7 @@ const styles = StyleSheet.create({
   measureLinkRow: { marginBottom: 16 },
   measureLinkText: { fontSize: 13, color: '#005bff', fontWeight: '600' },
   stockNoticeBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e7eceb75', padding: 18, borderRadius: 16, marginBottom: 20 },
-  stockNoticeText: { fontSize: 18, color: '#787a7d', marginHorizontal:20},
+  stockNoticeText: { fontSize: 18, color: '#787a7d', marginHorizontal: 20 },
   sectionDivider: { height: 1, backgroundColor: '#eee', marginVertical: 16 },
   
   sectionTitle: { fontSize: 24, fontWeight: '600', color: '#111', marginBottom: 8 },
@@ -462,21 +661,18 @@ const styles = StyleSheet.create({
   skuText: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 10 },
   subGroupTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginTop: 12, marginBottom: 6 },
 
-  reviewSnippet: { fontSize: 13, color: '#555', lineHeight: 18, marginTop: 6 },
-
-  /* Cố định cụm đáy: Thanh giá nằm ngay trên FloatingNavBar */
   footerContainer: {
     position: 'absolute',
-    bottom: 20, // Cách mép dưới màn hình 20px
+    bottom: 20,
     left: 0,
     right: 0,
     alignItems: 'center',
-    backgroundColor: 'transparent', // Hoàn toàn trong suốt
+    backgroundColor: 'transparent',
     zIndex: 999,
   },
   floatingPricePill: {
-    width: '80%', // Thuộc tính màn hình ngang trừ lề
-    backgroundColor: '#171d31', // Màu nền tối đặc trưng của Sportmaster
+    width: '80%',
+    backgroundColor: '#171d31',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -489,7 +685,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
     marginBottom: 120,
-    
   },
   pillOldPrice: { 
     fontSize: 14, 
@@ -512,5 +707,148 @@ const styles = StyleSheet.create({
     color: '#fff', 
     fontSize: 16, 
     fontWeight: 'bold' 
+  },
+
+  addedStateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  quantityCounter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: 8,
+  },
+  qtyBtn: {
+    padding: 6,
+  },
+  qtyBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  quantityText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  goToCartBtn: {
+    backgroundColor: '#005bff',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  goToCartText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+
+  cartModalOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+    zIndex: 2000,
+  },
+  modalBackdropTouch: {
+    flex: 1,
+  },
+  cartModalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 28,
+    height: '65%',
+  },
+  modalHandleBar: {
+    width: 40, height: 4,
+    backgroundColor: '#d1d1d6',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#111',
+    marginBottom: 16,
+  },
+  horizontalScrollContainer: {
+    gap: 12,
+    paddingBottom: 8,
+  },
+
+  productCard: {
+    width: 180,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+  },
+  productImageWrapper: {
+    width: '100%',
+    height: 230,
+    backgroundColor: '#f6f6f8',
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  productImg: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  floatingActions: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    gap: 6,
+  },
+  actionIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  productDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  productPrice: { fontSize: 18, fontWeight: 'bold', color: '#086ee7' },
+  productOldPrice: { fontSize: 14, color: '#888', textDecorationLine: 'line-through' },
+  productDiscount: { fontSize: 14, color: '#ff3b30', fontWeight: 'bold' },
+  productName: { fontSize: 17, color: '#333', marginTop: 4, height: 36, fontWeight: '500' },
+  ratingText: { fontSize: 15, color: '#666', marginTop: 2 },
+  blueCartBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#005bff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  continueShoppingBtn: {
+    backgroundColor: '#eef3ff',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  continueShoppingText: {
+    color: '#005bff',
+    fontSize: 20,
+    fontWeight: '600',
   },
 });

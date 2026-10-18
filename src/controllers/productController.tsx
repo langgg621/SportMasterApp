@@ -1,38 +1,95 @@
-import { productAction } from '../actions/productAction';
-import { searchAction, SearchFilters } from '../actions/searchAction';
+import { MOCK_PRODUCTS, MOCK_FLASH_SALE_ITEMS } from '../data/mockData';
 import { Product, CreateProductDTO, UpdateProductDTO } from '../models/product';
+import { GenderTargetType } from '../models/genderTarget';
+
+export interface ProductFilters {
+  keyword?: string;
+  categoryId?: string;
+  brandId?: string;
+  targetGroup?: GenderTargetType;
+  minPrice?: number;
+  maxPrice?: number;
+  isHotDeal?: boolean;
+  isNew?: boolean;
+}
 
 export const productController = {
-  // Lấy danh sách sản phẩm theo bộ lọc hoặc từ khóa
-  getProducts(filters?: SearchFilters): Product[] {
-    if (filters && filters.keyword) {
-      return searchAction.searchProducts(filters);
+  // Lấy danh sách sản phẩm theo bộ lọc
+  getProducts(filters?: ProductFilters): Product[] {
+    let results = [...MOCK_PRODUCTS];
+    
+    if (!filters) return results;
+
+    if (filters.keyword) {
+      const kw = filters.keyword.toLowerCase();
+      results = results.filter(p => p.name.toLowerCase().includes(kw) || p.description?.toLowerCase().includes(kw));
     }
-    return productAction.getProducts(filters);
+    if (filters.categoryId) {
+      results = results.filter(p => p.categoryId === filters.categoryId);
+    }
+    if (filters.brandId) {
+      results = results.filter(p => p.brandId === filters.brandId);
+    }
+    if (filters.targetGroup) {
+      results = results.filter(p => p.targetGroup === filters.targetGroup);
+    }
+    if (filters.isHotDeal !== undefined) {
+      results = results.filter(p => p.isHotDeal === filters.isHotDeal);
+    }
+    if (filters.isNew !== undefined) {
+      results = results.filter(p => p.isNew === filters.isNew);
+    }
+
+    return results;
   },
 
-  // Xem chi tiết sản phẩm
+  // Xem chi tiết sản phẩm theo ID
   getProductDetails(id: string): Product | undefined {
-    return productAction.getProductById(id);
+    return MOCK_PRODUCTS.find(p => p.id === id);
   },
 
   // Thêm mới sản phẩm
   createNewProduct(dto: CreateProductDTO): Product {
-    return productAction.createProduct(dto);
+    const newProduct: Product = {
+      id: `p_${Date.now()}`,
+      ...dto,
+      rating: 5.0,
+      reviewsCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    MOCK_PRODUCTS.push(newProduct);
+    return newProduct;
   },
 
   // Cập nhật sản phẩm
   updateExistingProduct(dto: UpdateProductDTO): Product | null {
-    return productAction.updateProduct(dto);
+    const index = MOCK_PRODUCTS.findIndex(p => p.id === dto.id);
+    if (index === -1) return null;
+
+    MOCK_PRODUCTS[index] = {
+      ...MOCK_PRODUCTS[index],
+      ...dto,
+      updatedAt: new Date().toISOString(),
+    };
+    return MOCK_PRODUCTS[index];
   },
 
   // Xóa sản phẩm
   removeProduct(id: string): boolean {
-    return productAction.deleteProduct(id);
+    const index = MOCK_PRODUCTS.findIndex(p => p.id === id);
+    if (index === -1) return false;
+    MOCK_PRODUCTS.splice(index, 1);
+    return true;
   },
 
-  // Lấy gợi ý từ khóa tìm kiếm
+  // Gợi ý từ khóa tìm kiếm
   getSearchSuggestions(keyword: string): string[] {
-    return searchAction.getSearchSuggestions(keyword);
+    if (!keyword.trim()) return [];
+    const kw = keyword.toLowerCase();
+    const matchedNames = MOCK_PRODUCTS
+      .map(p => p.name)
+      .filter(name => name.toLowerCase().includes(kw));
+    return Array.from(new Set(matchedNames)).slice(0, 5);
   },
 };

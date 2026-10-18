@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { productController } from '../controllers/productController';
 import FloatingNavBar from '../components/FloatingNavBar';
-import { useNavigation } from '@react-navigation/native';
+import {cartController} from '../controllers/cartController';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BANNER_WIDTH = SCREEN_WIDTH - 32;
@@ -119,7 +119,12 @@ export default function HomeScreen({ navigation }: { navigation?: any }) {
     const currentIndex = Math.round(contentOffsetX / BANNER_WIDTH);
     setActiveBannerIndex(currentIndex);
   };
-
+// Lấy danh sách sản phẩm trong giỏ hàng hiện tại
+  const cartState = cartController.getCartState();
+  const cartItems = cartState?.items || [];
+  
+  // Tính tổng số lượng tất cả mặt hàng trong giỏ
+  const totalCartCount = cartItems.reduce((sum: number, item: any) => sum + (item?.quantity || 0), 0);
   return (
     <SafeAreaView style={styles.phonePage}>
       <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
@@ -414,6 +419,7 @@ export default function HomeScreen({ navigation }: { navigation?: any }) {
 
       <FloatingNavBar 
         activeTab="Главная" 
+        cartCount={totalCartCount}
         onTabPress={(tab) => {
           if (tab === 'Главная') navigation.navigate('HomeTab');
           if (tab === 'Каталог') navigation.navigate('CatalogTab');

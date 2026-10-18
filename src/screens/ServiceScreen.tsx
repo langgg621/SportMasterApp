@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import FloatingNavBar from '../components/FloatingNavBar';
-
+import { cartController } from '../controllers/cartController';
 interface ServiceItem {
   id: string;
   title: string;
@@ -63,7 +63,12 @@ export default function ServicesScreen({ navigation }: { navigation: any }) {
       ],
     },
   ];
-
+// Lấy danh sách sản phẩm trong giỏ hàng hiện tại
+  const cartState = cartController.getCartState();
+  const cartItems = cartState?.items || [];
+  
+  // Tính tổng số lượng tất cả mặt hàng trong giỏ
+  const totalCartCount = cartItems.reduce((sum: number, item: any) => sum + (item?.quantity || 0), 0);
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Thanh địa chỉ & Chat Header */}
@@ -113,6 +118,7 @@ export default function ServicesScreen({ navigation }: { navigation: any }) {
       {/* FloatingNavBar chọn tab Сервисы */}
       <FloatingNavBar 
         activeTab="Сервисы"
+        cartCount={totalCartCount}
         onTabPress={(tab) => {
           if (tab === 'Главная') navigation.navigate('HomeTab');
           if (tab === 'Каталог') navigation.navigate('CatelogyTab');

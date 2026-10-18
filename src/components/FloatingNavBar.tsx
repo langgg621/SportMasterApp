@@ -4,12 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 
 interface FloatingNavBarProps {
   activeTab?: string;
+  cartCount?: number; // Thêm prop cartCount
   onTabPress?: (tabName: string) => void;
   onStorePress?: () => void;
 }
 
 export default function FloatingNavBar({ 
   activeTab = 'Главная', 
+  cartCount = 0,
   onTabPress, 
   onStorePress 
 }: FloatingNavBarProps) {
@@ -42,6 +44,8 @@ export default function FloatingNavBar({
       <View style={styles.bottomNav}>
         {navItems.map(({ name, label }) => {
           const isSelected = activeTab === label;
+          const isCart = label === 'Корзина';
+
           return (
             <TouchableOpacity 
               key={label} 
@@ -49,11 +53,21 @@ export default function FloatingNavBar({
               activeOpacity={0.7}
               onPress={() => onTabPress && onTabPress(label)}
             >
-              <Ionicons 
-                name={iconMap[name]} 
-                size={22} 
-                color={isSelected ? '#086ee7' : '#b4b7bd'} 
-              />
+              <View style={{ position: 'relative' }}>
+                <Ionicons 
+                  name={iconMap[name]} 
+                  size={22} 
+                  color={isSelected ? '#086ee7' : '#b4b7bd'} 
+                />
+                {/* Badge hiển thị số lượng giỏ hàng */}
+                {isCart && cartCount > 0 && (
+                  <View style={styles.cartBadge}>
+                    <Text style={styles.cartBadgeText}>
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <Text style={[styles.navText, isSelected && styles.navTextSelected]}>
                 {label}
               </Text>
@@ -117,5 +131,23 @@ const styles = StyleSheet.create({
   navTextSelected: {
     color: '#086ee7',
     fontWeight: '700',
+  },
+  /* Badge đỏ hiển thị số lượng sản phẩm trên icon giỏ hàng */
+  cartBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#ff3b30',
+    borderRadius: 9,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cartBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });

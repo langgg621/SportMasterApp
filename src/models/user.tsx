@@ -1,3 +1,5 @@
+import { Product } from "./product";
+
 export interface UserAddress {
   id: string;
   city: string;
@@ -9,17 +11,19 @@ export interface UserAddress {
 
 export interface User {
   id: string;
-  fullName: string;
-  email: string;
+  name: string;
   phone: string;
+  email: string;
+  bonusPoints: number;
+  bonusExpiry: string;
+  location: string;
+  clubLevel: string;
+  cashback: string;
   avatarUrl?: string;
-  bonusPoints: number;        // Số điểm thưởng tích lũy (бонусы) trong ứng dụng Sportmaster
-  addresses: UserAddress[];
-  savedProductIds: string[];  // Danh sách ID sản phẩm yêu thích (thả tim)
 }
 
 export interface UpdateUserDTO {
-  fullName?: string;
+  name?: string;
   phone?: string;
   avatarUrl?: string;
 }
