@@ -22,7 +22,7 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
-
+  const [productList, setProductList] = useState<Product[]>([]);
   const categoriesList = categoryController.getAllCategories();
   const cartState = cartController.getCartState();
 
@@ -45,39 +45,37 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
       setSearchResults(results);
     }
   };
+const executeSearch = (searchKey: string) => {
+    if (!searchKey.trim()) return;
 
+    setHasSearched(true);
+    setSuggestions([]);
+
+    // 1. Thử lấy sản phẩm theo Danh mục trước
+    let results = categoryController.getProductsByCategoryName(searchKey);
+
+    // 2. Nếu danh mục không có sản phẩm nào, mới tìm kiếm trong toàn bộ danh sách sản phẩm theo từ khóa
+    if (results.length === 0) {
+      results = productController.getProducts({ keyword: searchKey });
+    }
+
+    // 3. Cập nhật danh sách kết quả tìm được
+    setProductList(results);
+
+    // Nếu tìm thấy sản phẩm -> Chuyển sang màn hình Kết quả SearchResult
+    if (results.length > 0) {
+      navigation.navigate('SearchResult', { keyword: searchKey, results: results });
+    }
+  };
   // Khi nhấn tìm kiếm (Enter) trên bàn phím
   const handleSubmitEditing = () => {
-    if (keyword.trim() !== '') {
-      setHasSearched(true);
-      setSuggestions([]);
-
-      const categoryProducts = categoryController.getProductsByCategoryName(keyword);
-      const results = categoryProducts.length > 0 ? categoryProducts : productController.getProducts({ keyword });
-
-      if (results.length > 0) {
-        // Đã sửa lại đúng tên 'SearchResult' đã đăng ký trong Stack.Navigator
-        navigation.navigate('SearchResult', { keyword: keyword, results: results });
-      } else {
-        setSearchResults([]);
-      }
-    }
+    executeSearch(keyword);
   };
 
   // Khi bấm vào một gợi ý hoặc danh mục
   const handleSelectSuggestionOrCategory = (itemText: string) => {
     setKeyword(itemText);
-    setHasSearched(true);
-    setSuggestions([]);
-
-    const categoryProducts = categoryController.getProductsByCategoryName(itemText);
-    const results = categoryProducts.length > 0 ? categoryProducts : productController.getProducts({ keyword: itemText });
-
-    if (results.length > 0) {
-      navigation.navigate('SearchResult', { keyword: itemText, results: results });
-    } else {
-      setSearchResults([]);
-    }
+    executeSearch(itemText);
   };
 
   return (
@@ -139,7 +137,7 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
       )}
 
       {/* Giao diện khi tìm kiếm KHÔNG CÓ KẾT QUẢ (hiện ảnh cái bơm) */}
-      {hasSearched && searchResults.length === 0 && (
+      {hasSearched && productList.length === 0 && (
         <View style={styles.emptyWrapper}>
           <Text style={styles.foundText}>Нашли 0 товаров</Text>
           <View style={styles.imageContainer}>

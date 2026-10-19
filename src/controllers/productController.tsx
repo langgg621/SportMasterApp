@@ -92,4 +92,26 @@ export const productController = {
       .filter(name => name.toLowerCase().includes(kw));
     return Array.from(new Set(matchedNames)).slice(0, 5);
   },
+  // Phương thức sắp xếp danh sách sản phẩm theo tiêu chí
+  sortProduct(products: Product[], sortBy: 'popular' | 'price_asc' | 'price_desc' | 'rating'): Product[] {
+    let sortedList = [...products];
+
+    switch (sortBy) {
+      case 'price_asc':
+        sortedList.sort((a, b) => a.price - b.price);
+        break;
+      case 'price_desc':
+        sortedList.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating':
+        sortedList.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case 'popular':
+      default:
+        sortedList.sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0));
+        break;
+    }
+
+    return sortedList;
+  },
 };

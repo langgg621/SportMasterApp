@@ -245,24 +245,6 @@ export const INITIAL_CART: Cart = {
   totalAmount: 0,
 };
 
-// 9. Lịch sử Đơn hàng mẫu (Initial Orders)
-export const MOCK_ORDERS: Order[] = [
-  {
-    number: 'SM-892341',
-    items: [
-      {
-        id: 'ci_1',
-        productId: 'p1',
-        product: MOCK_PRODUCTS[0],
-        quantity: 1,
-        selectedSize: '39.5',
-      }
-    ],
-    method: 'pickup',
-    pickupAddress: 'Томск, Буяновский переулок, 3А',
-    total: 3399,
-  }
-];
 // Thông tin Profile người dùng
 export const MOCK_USER_PROFILE: User = {
   id: 'u1',
