@@ -175,9 +175,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
         <View style={styles.stickySearchWrapper}>
           <View style={styles.topSearchRow}>
             <TouchableOpacity style={styles.search} onPress={() => navigation.navigate('SearchScreen')}>
-              <Ionicons name="search-outline" size={18} color="#9ca6c2" />
-              <Text style={{ color: '#9ca6c2', flex: 1, marginLeft: 8 }}>Искать в Спортмастере</Text>
-              <Ionicons name="scan-outline" size={18} color="#9ca6c2" />
+              <Ionicons name="search-outline" size={20} color="#9ca6c2" />
+              <Text style={{ color: '#9ca6c2', flex: 1, marginLeft: 8, fontSize:20 }}>Искать в Спортмастере</Text>
+              <Ionicons name="barcode-outline" size={20} color="#9ca6c2" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.chatBtn} onPress={() => navigation.navigate('SearchScreen')}>
               <Ionicons name="chatbubble-outline" size={24} color="#b7c0d8" />
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   monthlyTitle: { fontSize: 24, fontWeight: 'bold', color: 'white', lineHeight: 28 },
   
   topSearchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  search: { flex: 1, height: 44, backgroundColor: '#303950', borderRadius: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' },
+  search: { flex: 1, height: 40, backgroundColor: '#303950', borderRadius: 22, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' },
   chatBtn: { position: 'relative', padding: 6, justifyContent: 'center', alignItems: 'center' },
   chatBadge: { position: 'absolute', right: -1, top: -2, width: 17, height: 17, borderRadius: 8.5, backgroundColor: '#f3203d', justifyContent: 'center', alignItems: 'center' },
   

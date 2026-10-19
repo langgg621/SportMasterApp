@@ -82,11 +82,7 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Search Header có thêm nút Отмена */}
       <View style={styles.searchHeader}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 8 }}>
-          <Ionicons name="arrow-back" size={24} color="#111" />
-        </TouchableOpacity>
         <View style={styles.searchInputContainer}>
           <Ionicons name="search-outline" size={18} color="#8e8e93" style={{ marginRight: 6 }} />
           <TextInput
@@ -94,45 +90,35 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
             value={keyword}
             onChangeText={handleTextChange}
             onSubmitEditing={handleSubmitEditing}
-            placeholder="Поиск по категориям и товарам..."
+            placeholder="Искасть в Спортмастере"
             placeholderTextColor="#8e8e93"
             autoFocus
             returnKeyType="search"
           />
+          <Ionicons name="barcode-outline" size={20} color="#9ca6c2" />
           {keyword.length > 0 && (
             <TouchableOpacity onPress={() => handleTextChange('')}>
               <Text style={styles.clearIcon}>✕</Text>
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelBtn}>
-          <Text style={styles.cancelText}>Отмена</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Danh mục ngang khi chưa tìm kiếm */}
       {!hasSearched && (
-        <View style={styles.categorySection}>
-          <Text style={styles.sectionTitle}>Категории</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-            {categoriesList.map((cat) => (
-              <TouchableOpacity 
-                key={cat.id} 
-                style={[styles.categoryCard, selectedCategoryName === cat.name && styles.categoryCardActive]}
-                onPress={() => handleSelectSuggestionOrCategory(cat.name)}
-              >
-                <Ionicons 
-                  name={(cat.icon as any) || 'grid-outline'} 
-                  size={20} 
-                  color={selectedCategoryName === cat.name ? '#fff' : '#005bff'} 
-                  style={{ marginBottom: 4 }} 
-                />
-                <Text style={[styles.categoryCardText, selectedCategoryName === cat.name && styles.categoryCardTextActive]}>
-                  {cat.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+        <View style={styles.suggestionsContainer}>
+          
+          {categoriesList.slice(0, 5).map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
+              style={styles.suggestionItem}
+              activeOpacity={0.7}
+              onPress={() => handleSelectSuggestionOrCategory(cat.name)}
+            >
+              <Ionicons name="search-outline" size={20} color="#8e8e93"  />
+              <Text style={styles.suggestionText}>{cat.name}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
@@ -177,7 +163,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   searchHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
   searchInputContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f2f6', borderRadius: 20, paddingHorizontal: 12, height: 40 },
-  input: { flex: 1, fontSize: 15, color: '#333' },
+  input: { flex: 1, fontSize: 18, color: '#333' },
   clearIcon: { fontSize: 14, color: '#666', padding: 4 },
   cancelBtn: { marginLeft: 10, paddingVertical: 6 },
   cancelText: { fontSize: 16, color: '#111', fontWeight: '400' },
@@ -188,9 +174,9 @@ const styles = StyleSheet.create({
   categoryCardActive: { backgroundColor: '#005bff', borderColor: '#005bff' },
   categoryCardText: { fontSize: 15, fontWeight: '600', color: '#333' },
   categoryCardTextActive: { color: '#fff' },
-  suggestionsContainer: { borderBottomWidth: 1, borderColor: '#eee', marginBottom: 10 },
-  suggestionItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16 },
-  suggestionText: { fontSize: 16, color: '#222' },
+  suggestionsContainer: {   marginTop:10 },
+  suggestionItem: { borderBottomWidth: 1,borderColor: '#eee', marginHorizontal: 20,flexDirection: 'row', alignItems: 'center', paddingVertical: 10, },
+  suggestionText: { fontSize: 18, color: '#222', marginLeft:10 },
   emptyWrapper: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
   foundText: { fontSize: 16, color: '#444', fontWeight: '400', marginTop: 10 },
   imageContainer: { alignItems: 'center', marginTop: 50 },
