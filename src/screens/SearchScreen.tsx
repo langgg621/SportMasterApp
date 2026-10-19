@@ -12,9 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { productController } from '../controllers/productController';
 import { categoryController } from '../controllers/catelogyController';
+import { cartController } from '../controllers/cartController';
 import { Product } from '../models/product';
 import { Ionicons } from '@expo/vector-icons';
-import FloatingNavBar from '../components/FloatingNavBar';
 
 export default function SearchScreen({ navigation }: { navigation: any }) {
   const [keyword, setKeyword] = useState('');
@@ -23,8 +23,8 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
 
-  // Lấy danh sách danh mục từ controller để hiển thị gợi ý nhanh
   const categoriesList = categoryController.getAllCategories();
+  const cartState = cartController.getCartState();
 
   const handleTextChange = (text: string) => {
     setKeyword(text);
@@ -35,55 +35,54 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
       setSuggestions([]);
       setSearchResults([]);
     } else {
-      // Gợi ý từ khóa sản phẩm hoặc tên danh mục
       const allCategories = categoriesList.map(c => c.name);
       const matchedCats = allCategories.filter(c => c.toLowerCase().includes(text.toLowerCase()));
       
       const productSuggestions = productController.getSearchSuggestions(text);
       setSuggestions(Array.from(new Set([...matchedCats, ...productSuggestions])).slice(0, 4));
 
-      // Mặc định tìm kiếm sản phẩm theo từ khóa
       const results = productController.getProducts({ keyword: text });
       setSearchResults(results);
     }
   };
 
-  // Khi nhấn tìm kiếm (Enter)
+  // Khi nhấn tìm kiếm (Enter) trên bàn phím
   const handleSubmitEditing = () => {
     if (keyword.trim() !== '') {
       setHasSearched(true);
       setSuggestions([]);
 
-      // Ưu tiên kiểm tra xem từ khóa nhập vào có trùng với tên danh mục nào không
       const categoryProducts = categoryController.getProductsByCategoryName(keyword);
-      if (categoryProducts.length > 0) {
-        setSelectedCategoryName(keyword);
-        setSearchResults(categoryProducts);
+      const results = categoryProducts.length > 0 ? categoryProducts : productController.getProducts({ keyword });
+
+      if (results.length > 0) {
+        // Đã sửa lại đúng tên 'SearchResult' đã đăng ký trong Stack.Navigator
+        navigation.navigate('SearchResult', { keyword: keyword, results: results });
       } else {
-        const results = productController.getProducts({ keyword });
-        setSearchResults(results);
+        setSearchResults([]);
       }
     }
   };
 
-  // Khi người dùng bấm trực tiếp vào thẻ danh mục ngang
-  const handleSelectCategory = (categoryName: string) => {
-    setKeyword(categoryName);
-    setSelectedCategoryName(categoryName);
+  // Khi bấm vào một gợi ý hoặc danh mục
+  const handleSelectSuggestionOrCategory = (itemText: string) => {
+    setKeyword(itemText);
     setHasSearched(true);
     setSuggestions([]);
 
-    const results = categoryController.getProductsByCategoryName(categoryName);
-    setSearchResults(results);
-  };
+    const categoryProducts = categoryController.getProductsByCategoryName(itemText);
+    const results = categoryProducts.length > 0 ? categoryProducts : productController.getProducts({ keyword: itemText });
 
-  // Tính tổng số lượng giỏ hàng cho FloatingNavBar
-  const cartState = categoryController.getAllCategories(); // Hoặc cartController
-  const totalCartCount = 0; // Bạn có thể tích hợp cartController.getCartState() ở đây
+    if (results.length > 0) {
+      navigation.navigate('SearchResult', { keyword: itemText, results: results });
+    } else {
+      setSearchResults([]);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Search Header */}
+      {/* Search Header có thêm nút Отмена */}
       <View style={styles.searchHeader}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 8 }}>
           <Ionicons name="arrow-back" size={24} color="#111" />
@@ -106,9 +105,12 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
             </TouchableOpacity>
           )}
         </View>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelBtn}>
+          <Text style={styles.cancelText}>Отмена</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Thanh danh mục cuộn ngang */}
+      {/* Danh mục ngang khi chưa tìm kiếm */}
       {!hasSearched && (
         <View style={styles.categorySection}>
           <Text style={styles.sectionTitle}>Категории</Text>
@@ -116,11 +118,8 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
             {categoriesList.map((cat) => (
               <TouchableOpacity 
                 key={cat.id} 
-                style={[
-                  styles.categoryCard, 
-                  selectedCategoryName === cat.name && styles.categoryCardActive
-                ]}
-                onPress={() => handleSelectCategory(cat.name)}
+                style={[styles.categoryCard, selectedCategoryName === cat.name && styles.categoryCardActive]}
+                onPress={() => handleSelectSuggestionOrCategory(cat.name)}
               >
                 <Ionicons 
                   name={(cat.icon as any) || 'grid-outline'} 
@@ -128,10 +127,7 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
                   color={selectedCategoryName === cat.name ? '#fff' : '#005bff'} 
                   style={{ marginBottom: 4 }} 
                 />
-                <Text style={[
-                  styles.categoryCardText,
-                  selectedCategoryName === cat.name && styles.categoryCardTextActive
-                ]}>
+                <Text style={[styles.categoryCardText, selectedCategoryName === cat.name && styles.categoryCardTextActive]}>
                   {cat.name}
                 </Text>
               </TouchableOpacity>
@@ -147,10 +143,7 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
             <TouchableOpacity 
               key={index}
               style={styles.suggestionItem}
-              onPress={() => {
-                setKeyword(item);
-                handleSubmitEditing();
-              }}
+              onPress={() => handleSelectSuggestionOrCategory(item)}
             >
               <Ionicons name="search-outline" size={16} color="#888" style={{ marginRight: 12 }} />
               <Text style={styles.suggestionText}>{item}</Text>
@@ -159,42 +152,22 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
         </View>
       )}
 
-      {/* Kết quả tìm kiếm */}
-      {hasSearched && searchResults.length === 0 ? (
+      {/* Giao diện khi tìm kiếm KHÔNG CÓ KẾT QUẢ (hiện ảnh cái bơm) */}
+      {hasSearched && searchResults.length === 0 && (
         <View style={styles.emptyWrapper}>
           <Text style={styles.foundText}>Нашли 0 товаров</Text>
+          <View style={styles.imageContainer}>
+            <Image 
+              source={require('../constants/search_image.png')} 
+              style={styles.emptyImage} 
+              resizeMode="contain" 
+            />
+          </View>
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyTitle}>Ничего не найдено</Text>
-            <Text style={styles.emptySubText}>Попробуйте изменить запрос или выбрать другую категорию</Text>
+            <Text style={styles.emptySubText}>Попробуйте изменить ваш запрос или воспользуйтесь каталогом</Text>
           </View>
         </View>
-      ) : (
-        <FlatList
-          data={searchResults}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.productList}
-          ListHeaderComponent={
-            hasSearched && searchResults.length > 0 ? (
-              <Text style={styles.resultTitle}>
-                {selectedCategoryName ? `Категория: ${selectedCategoryName}` : `Результаты поиска`} ({searchResults.length} товаров)
-              </Text>
-            ) : null
-          }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.productCard}
-              onPress={() => navigation.navigate('ProductDetail', { productId: item.id })}
-            >
-              <Image source={{ uri: item.images[0] }} style={styles.productImg} />
-              {item.discount && (
-                <View style={styles.badge}><Text style={styles.badgeText}>{item.discount}</Text></View>
-              )}
-              <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-              <Text style={styles.price}>{item.price} ₽</Text>
-            </TouchableOpacity>
-          )}
-        />
       )}
     </SafeAreaView>
   );
@@ -202,41 +175,27 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  searchHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderColor: '#eee' },
+  searchHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
   searchInputContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f2f6', borderRadius: 20, paddingHorizontal: 12, height: 40 },
   input: { flex: 1, fontSize: 15, color: '#333' },
   clearIcon: { fontSize: 14, color: '#666', padding: 4 },
+  cancelBtn: { marginLeft: 10, paddingVertical: 6 },
+  cancelText: { fontSize: 16, color: '#111', fontWeight: '400' },
   categorySection: { paddingHorizontal: 12, marginTop: 12 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 8 },
   categoryScroll: { paddingBottom: 6, gap: 10 },
-  categoryCard: {
-    backgroundColor: '#f6f6f8',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#eee',
-    minWidth: 90,
-  },
+  categoryCard: { backgroundColor: '#f6f6f8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#eee', minWidth: 90 },
   categoryCardActive: { backgroundColor: '#005bff', borderColor: '#005bff' },
-  categoryCardText: { fontSize: 13, fontWeight: '600', color: '#333' },
+  categoryCardText: { fontSize: 15, fontWeight: '600', color: '#333' },
   categoryCardTextActive: { color: '#fff' },
   suggestionsContainer: { borderBottomWidth: 1, borderColor: '#eee', marginBottom: 10 },
   suggestionItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16 },
-  suggestionText: { fontSize: 15, color: '#222' },
-  productList: { padding: 8 },
-  productCard: { width: '48%', backgroundColor: '#fff', margin: '1%', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#eee' },
-  productImg: { width: '100%', height: 140, resizeMode: 'cover', borderRadius: 6 },
-  badge: { position: 'absolute', top: 12, left: 12, backgroundColor: '#ff3b30', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-  productName: { fontSize: 13, color: '#333', marginTop: 6 },
-  price: { fontSize: 15, fontWeight: 'bold', color: '#005bff', marginTop: 4 },
-  resultTitle: { fontSize: 15, fontWeight: 'bold', marginHorizontal: 8, marginVertical: 8, color: '#111', width: '100%' },
+  suggestionText: { fontSize: 16, color: '#222' },
   emptyWrapper: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
-  foundText: { fontSize: 15, color: '#444', fontWeight: '500' },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 150 },
-  emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#111', marginBottom: 8 },
-  emptySubText: { fontSize: 14, color: '#8e8e93', textAlign: 'center' },
+  foundText: { fontSize: 16, color: '#444', fontWeight: '400', marginTop: 10 },
+  imageContainer: { alignItems: 'center', marginTop: 50 },
+  emptyImage: { width: 300, height: 300 },
+  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'flex-start' },
+  emptyTitle: { fontSize: 24, fontWeight: '600', color: '#111', marginVertical: 20 },
+  emptySubText: { fontSize: 18, color: '#8e8e93', textAlign: 'center' },
 });

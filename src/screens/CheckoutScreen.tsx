@@ -9,9 +9,11 @@ import {
   Alert,
 } from 'react-native';
 import { orderController } from '../controllers/orderController';
+import { userController } from '../controllers/userController';
 
 export default function CheckoutScreen({ navigation }: { navigation: any }) {
   const [deliveryMethod, setDeliveryMethod] = useState<'pickup' | 'delivery'>('pickup');
+  const profile = userController.getUserProfile();
   const totals = orderController.calculateTotal('ship1', 200);
 
   const handlePlaceOrder = () => {
@@ -19,15 +21,15 @@ export default function CheckoutScreen({ navigation }: { navigation: any }) {
       const order = orderController.placeOrder({
         deliveryMethod: deliveryMethod,
         shippingMethodId: 'ship1',
-        pickupAddress: 'Томск, Буяновский переулок, 3А',
+        pickupAddress: profile.location,
         paymentMethod: 'CARD_ONLINE',
         usedBonusPoints: 200,
       });
       Alert.alert('Успешно!', `Заказ ${order.number} успешно оформлен.`, [
-        { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
+        { text: 'OK', onPress: () => navigation.navigate('HomeTab') }
       ]);
     } catch (e: any) {
-      Alert.alert('Lỗi', e.message);
+      Alert.alert('Ошибка', e.message);
     }
   };
 
@@ -41,18 +43,14 @@ export default function CheckoutScreen({ navigation }: { navigation: any }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
-        {/* Thông tin liên hệ */}
         <View style={styles.sectionCard}>
           <View style={styles.rowBetween}>
             <Text style={styles.sectionTitle}>Контактная информация</Text>
-            <TouchableOpacity><Text style={styles.editText}>Изменить</Text></TouchableOpacity>
           </View>
-          <Text style={styles.userName}>Линь Фам</Text>
+          <Text style={styles.userName}>{profile.name}</Text>
           <Text style={styles.userPhone}>+7 909 908 90 12</Text>
-          <Text style={styles.userEmail}>lpham342002@gmail.com</Text>
         </View>
 
-        {/* Phương thức nhận hàng */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Способ получения</Text>
           <View style={styles.tabToggleRow}>
@@ -70,12 +68,11 @@ export default function CheckoutScreen({ navigation }: { navigation: any }) {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.mapBox}>
-            <Text style={styles.mapBoxText}>Выбрать пункт самовывоза</Text>
-          </TouchableOpacity>
+          <View style={styles.mapBox}>
+            <Text style={styles.mapBoxText}>{profile.location}</Text>
+          </View>
         </View>
 
-        {/* Tổng tiền */}
         <View style={styles.sectionCard}>
           <View style={styles.rowBetween}>
             <Text style={styles.summaryLabel}>Сумма заказа</Text>
@@ -84,7 +81,6 @@ export default function CheckoutScreen({ navigation }: { navigation: any }) {
         </View>
       </ScrollView>
 
-      {/* Nút đặt hàng cuối trang */}
       <View style={styles.footer}>
         <View>
           <Text style={styles.finalPrice}>{totals.finalTotal} ₽</Text>
@@ -106,10 +102,8 @@ const styles = StyleSheet.create({
   sectionCard: { backgroundColor: '#fff', borderRadius: 8, padding: 14, marginBottom: 12 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 8 },
-  editText: { color: '#005bff', fontSize: 14, fontWeight: '500' },
   userName: { fontSize: 15, fontWeight: '600', color: '#333' },
   userPhone: { fontSize: 14, color: '#555', marginTop: 2 },
-  userEmail: { fontSize: 13, color: '#777', marginTop: 2 },
   tabToggleRow: { flexDirection: 'row', backgroundColor: '#f1f2f6', borderRadius: 8, padding: 4, marginBottom: 12 },
   toggleBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 6 },
   activeToggle: { backgroundColor: '#fff' },
