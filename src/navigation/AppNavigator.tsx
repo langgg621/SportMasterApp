@@ -1,7 +1,10 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useCart } from '../hooks/useCart';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { cartController } from '../controllers/cartController';
 
 // Import các màn hình
 import HomeScreen from '../screens/HomeScreen';
@@ -21,6 +24,13 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function CustomTabNavigator() {
+  const [totalCount, setTotalCount] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      const cartState = cartController.getCartState();
+      setTotalCount(cartState?.totalItems || 0);
+    }, [])
+  );
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
@@ -33,11 +43,12 @@ function CustomTabNavigator() {
         if (currentRouteName === 'ServicesTab') activeLabel = 'Сервисы';
         if (currentRouteName === 'CartTab') activeLabel = 'Корзина';
         if (currentRouteName === 'ProfileTab') activeLabel = 'Профиль';
-        
+        if (currentRouteName === 'ProductDetail') activeLabel = 'Главная';
 
         return (
           <FloatingNavBar
             activeTab={activeLabel}
+            cartCount={totalCount}
             onTabPress={(tabName) => {
               if (tabName === 'Главная') navigation.navigate('HomeTab');
               if (tabName === 'Каталог') navigation.navigate('CatelogyTab');
@@ -46,7 +57,6 @@ function CustomTabNavigator() {
               if (tabName === 'Профиль') navigation.navigate('ProfileTab');
             }}
             onStorePress={() => {
-              console.log('Nút định vị cửa hàng được nhấn');
             }}
           />
         );
@@ -57,6 +67,8 @@ function CustomTabNavigator() {
       <Tab.Screen name="ServicesTab" component={ServiceScreen} /> 
       <Tab.Screen name="CartTab" component={CartScreen} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} />
+      <Tab.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Tab.Screen name="SearchResult" component={SearchResultScreen} />
     </Tab.Navigator>
   );
 }

@@ -10,13 +10,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import FloatingNavBar from '../components/FloatingNavBar';
 import { cartController } from '../controllers/cartController';
+import { useCart } from '../hooks/useCart';
 import { serviceController } from '../controllers/serviceController';
 import { userController } from '../controllers/userController';
 
 export default function ServicesScreen({ navigation }: { navigation: any }) {
   const profile = userController.getUserProfile();
   const sections = serviceController.getServiceSections();
-  const cartState = cartController.getCartState();
+  const { totalCount: totalCartCount, refresh: refreshCart } = useCart();
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -53,19 +54,6 @@ export default function ServicesScreen({ navigation }: { navigation: any }) {
           </View>
         ))}
       </ScrollView>
-
-      <FloatingNavBar 
-        activeTab="Сервисы"
-        cartCount={cartState.totalItems}
-        onTabPress={(tab) => {
-          if (tab === 'Главная') navigation.navigate('HomeTab');
-          if (tab === 'Каталог') navigation.navigate('CatelogyTab');
-          if (tab === 'Сервисы') navigation.navigate('ServicesTab');
-          if (tab === 'Корзина') navigation.navigate('CartTab');
-          if (tab === 'Профиль') navigation.navigate('ProfileTab');
-        }}
-        onStorePress={() => {}}
-      />
     </SafeAreaView>
   );
 }

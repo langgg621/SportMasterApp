@@ -33,13 +33,7 @@ export default function FloatingNavBar({
 
   return (
     <>
-      <TouchableOpacity 
-        style={styles.inStoreBtn} 
-        activeOpacity={0.8}
-        onPress={onStorePress}
-      >
-        <Ionicons name="navigate-outline" size={22} color="#7aaaff" />
-      </TouchableOpacity>
+
 
       <View style={styles.bottomNav}>
         {navItems.map(({ name, label }) => {
@@ -55,9 +49,7 @@ export default function FloatingNavBar({
             >
               <View style={{ position: 'relative' }}>
                 <Ionicons 
-                  name={iconMap[name]} 
-                  size={22} 
-                  color={isSelected ? '#086ee7' : '#b4b7bd'} 
+                  name={iconMap[name]} size={22} color={isSelected ? '#086ee7' : '#b4b7bd'} 
                 />
                 {/* Badge hiển thị số lượng giỏ hàng */}
                 {isCart && cartCount > 0 && (
@@ -115,7 +107,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 10,
-    zIndex: 29,
+    zIndex: 999,
+    overflow:'visible',
     marginBottom: 30,
   },
   navItem: {
@@ -123,6 +116,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
+    overflow: 'visible',
   },
   navText: {
     fontSize: 9,
@@ -144,6 +138,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex:999,
+    elevation: 10,
   },
   cartBadgeText: {
     color: '#ffffff',

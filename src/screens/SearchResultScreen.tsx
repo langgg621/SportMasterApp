@@ -11,16 +11,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { cartController } from '../controllers/cartController';
-import FloatingNavBar from '../components/FloatingNavBar';
+import { useCart } from '../hooks/useCart';
 import { productController } from '../controllers/productController';
 import { Product } from '../models/product';
+import FloatingNavBar from '../components/FloatingNavBar';
 
 export default function SearchResultScreen({ route, navigation }: { route: any; navigation: any }) {  
   const { keyword, results: initialResults } = route.params || {};
   
   // Lấy state giỏ hàng để cập nhật badge số lượng
-  const cartState = cartController.getCartState();
-  const totalCartCount = cartState?.totalItems || 0;
+  const { totalCount: totalCartCount, refresh: refreshCart } = useCart();
   
   const [currentSort, setCurrentSort] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating'>('popular');
   const [productList, setProductList] = useState<Product[]>(initialResults || []);
@@ -30,9 +30,11 @@ export default function SearchResultScreen({ route, navigation }: { route: any; 
   const filterChips = [
     { id: 'f1', type: 'filter', icon: 'options-outline', badge: '1' },
     { id: 'f2', type: 'text', title: 'Способ получения' },
-    { id: 'f3', type: 'text', title: 'Акции' },
-    { id: 'f4', type: 'text', title: 'Цвет' },
-    { id: 'f5', type: 'text', title: 'Бренд' },
+    { id: 'f3', type: 'text', title: 'Товары Спортмастер' },
+    { id: 'f4', type: 'text', title: 'Цена' },
+    { id: 'f5', type: 'text', title: 'Вид товара' },
+    { id: 'f6', type: 'text', title: 'Размер' },
+
   ];
 
   // Danh sách các tùy chọn sắp xếp chuẩn Sportmaster
@@ -112,17 +114,21 @@ export default function SearchResultScreen({ route, navigation }: { route: any; 
 
           {filterChips.map((chip) => {
             if (chip.type === 'filter') {
+              const hasActiveFilters = route?.params?.appliedFilterCount > 0;
               return (
                 <TouchableOpacity 
                   key={chip.id} 
-                  style={styles.filterIconButtonActive}
-                  onPress={() => navigation.navigate('Filter')}
+                  style={[
+                    styles.sortIconButton, 
+                    hasActiveFilters && styles.filterIconButtonActive
+                  ]}
+                  onPress={() => navigation.navigate('Filter', { currentResults: productList })}
                 >
-                  <Ionicons name="options-outline" size={20} color="#fff" />
-                  {chip.badge && (
-                    <View style={styles.filterBadge}>
-                      <Text style={styles.filterBadgeText}>{chip.badge}</Text>
-                    </View>
+                  <Ionicons name="options-outline" size={20} color="black" />
+                  {hasActiveFilters && route?.params?.appliedFilterCount > 0 && (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeText}>{route.params.appliedFilterCount}</Text>
+                  </View>
                   )}
                 </TouchableOpacity>
               );
@@ -152,7 +158,8 @@ export default function SearchResultScreen({ route, navigation }: { route: any; 
                     <Ionicons name="heart-outline" size={16} color="#666" />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionIconBtn}>
-                    <Ionicons name="scale-outline" size={16} color="#666" />
+                    <MaterialCommunityIcons name="scale-unbalanced" size={16} color="#666" />
+                    
                   </TouchableOpacity>
                 </View>
               </View>
@@ -180,9 +187,10 @@ export default function SearchResultScreen({ route, navigation }: { route: any; 
 
                   <TouchableOpacity 
                     style={styles.blueCartBtn}
-                    onPress={() => cartController.addProductToCart(item, 1, item.sizes?.[0] || 'Standard')}
+                    onPress={() => { cartController.addProductToCart(item, 1, item.sizes?.[0] || 'Standard'); refreshCart(); }}
                   >
                     <Ionicons name="cart-outline" size={18} color="#fff" />
+                    
                   </TouchableOpacity>
                 </View>
               </View>
@@ -190,21 +198,18 @@ export default function SearchResultScreen({ route, navigation }: { route: any; 
           ))}
         </View>
       </ScrollView>
-
-      
-      {/* 5. Floating Bottom Navigation Bar */}
-      <FloatingNavBar 
-        activeTab="Каталог" 
-        cartCount={totalCartCount}
-        onTabPress={(tab) => {
-          if (tab === 'Главная') navigation.navigate('HomeTab');
-          if (tab === 'Каталог') navigation.navigate('CatalogTab');
-          if (tab === 'Сервисы') navigation.navigate('ServicesTab');
-          if (tab === 'Корзина') navigation.navigate('CartTab');
-          if (tab === 'Профиль') navigation.navigate('ProfileTab');
-        }}
-        onStorePress={() => {}}
-      />
+      <FloatingNavBar
+      activeTab="Каталог"
+      cartCount={totalCartCount}
+      onTabPress={(tabName) => {
+        if (tabName === 'Главная') navigation.navigate('MainTabs', { screen: 'HomeTab' });
+        if (tabName === 'Каталог') navigation.navigate('MainTabs', { screen: 'CatelogyTab' });
+        if (tabName === 'Сервисы') navigation.navigate('MainTabs', { screen: 'ServicesTab' });
+        if (tabName === 'Корзина') navigation.navigate('MainTabs', { screen: 'CartTab' });
+        if (tabName === 'Профиль') navigation.navigate('MainTabs', { screen: 'ProfileTab' });
+      }}
+      onStorePress={() => {}}
+    />
       {/* Modal Sắp xếp (Bottom Sheet) */}
       <Modal
         visible={isSortModalVisible}

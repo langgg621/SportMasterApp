@@ -14,7 +14,8 @@ import FloatingNavBar from '../components/FloatingNavBar';
 import { userController } from '../controllers/userController';
 import { productController } from '../controllers/productController';
 import { cartController } from '../controllers/cartController';
-
+import { useCart } from '../hooks/useCart';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 export default function ProfileScreen({ navigation }: { navigation: any }) {
   // Lấy dữ liệu profile từ userController
   const profile = userController.getUserProfile();
@@ -50,7 +51,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
     { id: '17', title: 'Информация', icon: 'information-circle-outline', badge: null, isNew: false },
   ];
 
-  const cartState = cartController.getCartState();
+  const { totalCount: totalCartCount, refresh: refreshCart } = useCart();
 
   const renderProductScroll = (products: any[]) => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScrollContainer}>
@@ -64,8 +65,12 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
             <Image source={{ uri: p.images[0] }} style={styles.productImg} />
             <View style={styles.floatingActions}>
               <TouchableOpacity style={styles.actionIconBtn}>
-                <Ionicons name="heart-outline" size={16} color="#666" />
-              </TouchableOpacity>
+                      <Ionicons name="heart-outline" size={16} color="#666" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionIconBtn}>
+                    <MaterialCommunityIcons name="scale-unbalanced" size={16} color="#666" />
+
+                    </TouchableOpacity>
             </View>
           </View>
 
@@ -82,7 +87,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
 
             <TouchableOpacity 
               style={styles.blueCartBtn}
-              onPress={() => cartController.addProductToCart(p, 1, p.sizes?.[0] || 'Standard')}
+              onPress={() => { cartController.addProductToCart(p, 1, p.sizes?.[0] || 'Standard'); refreshCart(); }}
             >
               <Ionicons name="cart-outline" size={18} color="#fff" />
             </TouchableOpacity>
@@ -183,19 +188,6 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
           </View>
         </View>
       </Animated.ScrollView>
-
-      <FloatingNavBar 
-        activeTab="Профиль"
-        cartCount={cartState.totalItems}
-        onTabPress={(tab) => {
-          if (tab === 'Главная') navigation.navigate('HomeTab');
-          if (tab === 'Каталог') navigation.navigate('CatelogyTab');
-          if (tab === 'Сервисы') navigation.navigate('ServicesTab');
-          if (tab === 'Корзина') navigation.navigate('CartTab');
-          if (tab === 'Профиль') navigation.navigate('ProfileTab');
-        }}
-        onStorePress={() => {}}
-      />
     </SafeAreaView>
   );
 }

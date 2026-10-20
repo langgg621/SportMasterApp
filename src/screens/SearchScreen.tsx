@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   categoryCardText: { fontSize: 15, fontWeight: '600', color: '#333' },
   categoryCardTextActive: { color: '#fff' },
   suggestionsContainer: {   marginTop:10 },
-  suggestionItem: { borderBottomWidth: 1,borderColor: '#eee', marginHorizontal: 20,flexDirection: 'row', alignItems: 'center', paddingVertical: 10, },
+  suggestionItem: {  marginHorizontal: 20,flexDirection: 'row', alignItems: 'center', paddingVertical: 12, },
   suggestionText: { fontSize: 18, color: '#222', marginLeft:10 },
   emptyWrapper: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
   foundText: { fontSize: 16, color: '#444', fontWeight: '400', marginTop: 10 },

@@ -14,8 +14,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { productController } from '../controllers/productController';
 import { cartController } from '../controllers/cartController';
+import { useCart } from '../hooks/useCart';
 import { homeController } from '../controllers/homeController';
-import FloatingNavBar from '../components/FloatingNavBar';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BANNER_WIDTH = SCREEN_WIDTH - 32;
@@ -30,15 +31,27 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
 
   // Lấy dữ liệu từ Controllers
   const hitProducts = productController.getProducts({});
-  const cartState = cartController.getCartState();
-  const totalCartCount = cartState?.totalItems || 0;
-
+  const { totalCount: totalCartCount, addToCart } = useCart();
   const brandsList = homeController.getBrands();
   const promoBanners = homeController.getPromoBanners();
   const carouselBanners = homeController.getCarouselBanners();
   const popularServices = homeController.getHomeServices();
   const currentCategories = homeController.getCategoriesByGender(selectedGender);
   const sportsList = homeController.getSports();
+  
+  // State lưu trữ giỏ hàng hiện tại
+  const [cartState, setCartState] = useState<any>({ items: [] });
+  const refreshCart = () => {
+    try {
+      const currentCart = cartController.getCartState();
+      setCartState(currentCart || { items: [] });
+    } catch (e) {
+      setCartState({ items: [] });
+    }
+  };
+    useEffect(() => {
+      refreshCart();
+    });
   // Tự động chuyển banner sau mỗi 2 giây theo hướng vòng tròn từ trái qua phải
   useEffect(() => {
     const timer = setInterval(() => {
@@ -102,7 +115,8 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
             <Ionicons name="heart-outline" size={16} color="#666" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionIconBtn}>
-            <Ionicons name="scale-outline" size={16} color="#666" />
+            <MaterialCommunityIcons name="scale-unbalanced" size={16} color="#666" />
+
           </TouchableOpacity>
         </View>
       </View>
@@ -128,8 +142,10 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
 
         <TouchableOpacity 
           style={styles.blueCartBtn}
-          onPress={() => cartController.addProductToCart(item, 1, item.sizes?.[0] || 'Standard')}
-        >
+          onPress={() => {
+              cartController.addProductToCart(item, 1, item.sizes?.[0] || 'Standard');
+              refreshCart();
+            }}>
           <Ionicons name="cart-outline" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -283,7 +299,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                   key={cat.id} 
                   style={styles.categoryCard} 
                   activeOpacity={0.9}
-                  onPress={() => navigation.navigate('CatalogTab')}
+                  onPress={() => navigation.navigate('CatalogyTab')}
                 >
                   <Image source={{ uri: cat.image }} style={styles.categoryImg} />
                   <Text style={styles.categoryTitle}>{cat.title}</Text>
@@ -411,20 +427,6 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
           </View>
         </View>
       </ScrollView>
-
-      {/* --- THANH ĐIỀU HƯỚNG NỔI DƯỚI ĐÁY --- */}
-      <FloatingNavBar 
-        activeTab="Главная" 
-        cartCount={totalCartCount}
-        onTabPress={(tab) => {
-          if (tab === 'Главная') navigation.navigate('HomeTab');
-          if (tab === 'Каталог') navigation.navigate('CatalogTab');
-          if (tab === 'Сервисы') navigation.navigate('ServicesTab');
-          if (tab === 'Корзина') navigation.navigate('CartTab');
-          if (tab === 'Профиль') navigation.navigate('ProfileTab');
-        }}
-        onStorePress={() => {}}
-      />
     </SafeAreaView>
   );
 }

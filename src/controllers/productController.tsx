@@ -6,11 +6,18 @@ export interface ProductFilters {
   keyword?: string;
   categoryId?: string;
   brandId?: string;
-  targetGroup?: GenderTargetType;
+  brandIds?: string[];        // Lọc theo nhiều thương hiệu (Бренд)
+  colors?: string[];          // Lọc theo màu sắc (Цвет)
+  sports?: string[];          // Lọc theo môn thể thao (Вид спорта)
+  seasons?: string[];         // Lọc theo mùa (Сезон)
+  closures?: string[];        // Lọc theo loại khóa/dây (Застежка)
+  materials?: string[];       // Lọc theo chất liệu (Материал верха)
+  surfaces?: string[];        // Lọc theo loại bề mặt/địa hình (Покрытие)
   minPrice?: number;
   maxPrice?: number;
-  isHotDeal?: boolean;
-  isNew?: boolean;
+  isHotDeal?: boolean;        // Lọc sản phẩm giảm giá / Лучшая цена
+  isNew?: boolean;            // Lọc bộ sưu tập mới (Новая коллекция)
+  targetGroup?: GenderTargetType;
 }
 
 export const productController = {
@@ -30,6 +37,41 @@ export const productController = {
     if (filters.brandId) {
       results = results.filter(p => p.brandId === filters.brandId);
     }
+    // Lọc theo danh sách thương hiệu
+    if (filters.brandIds && filters.brandIds.length > 0) {
+      results = results.filter(p => filters.brandIds?.includes(p.brandId));
+    }
+    // Lọc theo màu sắc
+    if (filters.colors && filters.colors.length > 0) {
+      results = results.filter(p => p.colors?.some(c => filters.colors?.includes(c)));
+    }
+    // Lọc theo môn thể thao
+    if (filters.sports && filters.sports.length > 0) {
+      results = results.filter(p => p.sport && filters.sports?.includes(p.sport));
+    }
+    // Lọc theo mùa
+    if (filters.seasons && filters.seasons.length > 0) {
+      results = results.filter(p => p.season && filters.seasons?.includes(p.season));
+    }
+    // Lọc theo loại khóa/dây
+    if (filters.closures && filters.closures.length > 0) {
+      results = results.filter(p => p.closure && filters.closures?.includes(p.closure));
+    }
+    // Lọc theo chất liệu
+    if (filters.materials && filters.materials.length > 0) {
+      results = results.filter(p => p.material && filters.materials?.includes(p.material));
+    }
+    // Lọc theo mặt sân / địa hình
+    if (filters.surfaces && filters.surfaces.length > 0) {
+      results = results.filter(p => p.surface && filters.surfaces?.includes(p.surface));
+    }
+    // Lọc theo khoảng giá
+    if (filters.minPrice !== undefined) {
+      results = results.filter(p => p.price >= filters.minPrice!);
+    }
+    if (filters.maxPrice !== undefined) {
+      results = results.filter(p => p.price <= filters.maxPrice!);
+    }
     if (filters.targetGroup) {
       results = results.filter(p => p.targetGroup === filters.targetGroup);
     }
@@ -42,7 +84,22 @@ export const productController = {
 
     return results;
   },
+  getFilterOptions(subset: Product[]) {
+    const getOptions = (key: keyof Product) => {
+      const values = subset.map(p => p[key]);
+      const flattened = values.flatMap(item => Array.isArray(item) ? item : [item]);
+      return Array.from(new Set(flattened.filter(Boolean))) as string[];
+    };
 
+    return {
+      productTypes: getOptions('productType'),
+      sizes: getOptions('sizes'),
+      brands: getOptions('brandId'),
+      sports: getOptions('sport'),
+      colors: getOptions('colors'),
+      seasons: getOptions('season'),
+    };
+  },
   // Xem chi tiết sản phẩm theo ID
   getProductDetails(id: string): Product | undefined {
     return MOCK_PRODUCTS.find(p => p.id === id);
@@ -113,5 +170,5 @@ export const productController = {
     }
 
     return sortedList;
-  },
+  }
 };
