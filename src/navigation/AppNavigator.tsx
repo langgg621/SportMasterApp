@@ -24,13 +24,8 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function CustomTabNavigator() {
-  const [totalCount, setTotalCount] = useState(0);
-  useFocusEffect(
-    useCallback(() => {
-      const cartState = cartController.getCartState();
-      setTotalCount(cartState?.totalItems || 0);
-    }, [])
-  );
+  const { totalCount: totalCartCount, refresh: refreshCart } = useCart();
+
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
@@ -43,12 +38,11 @@ function CustomTabNavigator() {
         if (currentRouteName === 'ServicesTab') activeLabel = 'Сервисы';
         if (currentRouteName === 'CartTab') activeLabel = 'Корзина';
         if (currentRouteName === 'ProfileTab') activeLabel = 'Профиль';
-        if (currentRouteName === 'ProductDetail') activeLabel = 'Главная';
 
         return (
           <FloatingNavBar
             activeTab={activeLabel}
-            cartCount={totalCount}
+            cartCount={totalCartCount}
             onTabPress={(tabName) => {
               if (tabName === 'Главная') navigation.navigate('HomeTab');
               if (tabName === 'Каталог') navigation.navigate('CatelogyTab');

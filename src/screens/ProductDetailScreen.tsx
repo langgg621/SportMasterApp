@@ -166,7 +166,6 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
           {/* Badge & Promo Row */}
           <View style={styles.promoRow}>
             {product.discount && <View style={styles.redDiscountBadge}><Text style={styles.redBadgeText}>{product.discount}</Text></View>}
-            <Text style={styles.onlyUsText}>Только у нас</Text>
             <Text style={styles.honestSignText}>Честный знак</Text>
           </View>
 
@@ -259,18 +258,53 @@ export default function ProductDetailScreen({ route, navigation }: { route: any;
               );
             })}
           </ScrollView>
+{!selectedSize && (
+            <TouchableOpacity style={styles.measureLinkRow}>
+              <Text style={styles.measureLinkText}>Как узнать длину стопы?</Text>
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity style={styles.measureLinkRow}>
-            <Text style={styles.measureLinkText}>Как узнать длину стопы?</Text>
-          </TouchableOpacity>
+          {/* ĐÃ CHỌN SIZE XONG: Hiển thị khối "Доступность товара" */}
+          {selectedSize && (
+            <View style={styles.availabilityCard}>
+              <Text style={styles.availabilityCardTitle}>Доступность товара</Text>
 
-          {/* Stock Notice Box */}
-          <View style={styles.stockNoticeBox}>
-            <Entypo name="ruler" size={18} color="#bcbec1" style={{ marginRight: 8 }} />
-            <Text style={styles.stockNoticeText}>
-              {selectedSize ? `Выбран размер: ${selectedSize}` : 'Для отображения наличия выберите размер'}
-            </Text>
-          </View>
+              <View style={styles.availabilityRow}>
+                <View style={styles.availIconBox}>
+                  <Ionicons name="location-sharp" size={18} color="#005bff" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.availMainText}>Самовывоз</Text>
+                  <Text style={styles.availSubText}>в 2 магазинах через 15 минут, бесплатно, предоплата 100%</Text>
+                  <Text style={styles.availOrangeText}>В часы работы магазина</Text>
+                  <Text style={styles.availMainText}>В пунктах выдачи</Text>
+                  <Text style={styles.availSubText}>за 2 часаб 300 ₽, предоплата 100%</Text>
+                  <Text style={styles.availSubText}>завтра, бесплатно, предоплата 100%</Text>
+
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#888" />
+              </View>
+
+              <View style={styles.availabilityDivider} />
+
+              <View style={styles.availabilityRow}>
+                <View style={styles.availIconBox}>
+                  <Ionicons name="car-outline" size={18} color="#005bff" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.availMainText}>Доставка</Text>
+                  <Text style={styles.availSubText}>завтра, 390 ₽, предоплата 100%</Text>
+                  <Text style={styles.availMainText}>Экспресс-доставка</Text>
+                  <Text style={styles.availSubText}>за 2 часаб 300 ₽, предоплата 100%</Text>
+                  <Text style={styles.availMainText}>Адрес доставки</Text>
+                <Text style={[styles.availSubText, { color: '#005bff', fontWeight: '600', marginTop: 2 }]}>
+                  Томск, Буяновский переулок, 3А
+                </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#888" />
+              </View>
+            </View>
+          )}
 
           {/* --- ACCORDION SECTIONS --- */}
           <View style={styles.sectionDivider} />
@@ -528,8 +562,8 @@ const styles = StyleSheet.create({
   backBtn: { padding: 4 },
   headerActions: { flexDirection: 'row', gap: 12 },
   headerIconBtn: { padding: 4 },
-  imageContainer: { width: '100%', height: 320, backgroundColor: '#f6f6f8', position: 'relative', justifyContent: 'center', alignItems: 'center' },
-  mainImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  imageContainer: { width: '100%', height: 500, backgroundColor: '#f6f6f8', position: 'relative', justifyContent: 'center', alignItems: 'center', borderRadius:24 },
+  mainImage: { width: '100%', height: '100%', resizeMode: 'cover',borderRadius:24 },
   imageTagRow: { position: 'absolute', bottom: 12, flexDirection: 'row', gap: 8 },
   tagWear: { backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
   tagSimilar: { backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
@@ -540,18 +574,18 @@ const styles = StyleSheet.create({
   redDiscountBadge: { backgroundColor: '#ff3b30', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   redBadgeText: { color: '#fff', fontSize: 11, fontWeight: 'bold' },
   onlyUsText: { fontSize: 12, color: '#333', fontWeight: '500' },
-  honestSignText: { fontSize: 12, color: '#333', fontWeight: '500' },
-  videoButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef3ff', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, alignSelf: 'flex-start', marginBottom: 14 },
-  videoButtonText: { color: '#005bff', fontSize: 14, fontWeight: '600' },
+  honestSignText: { fontSize: 12, color: '#ffffff', fontWeight: '500',backgroundColor:'#565758', padding:4,borderRadius: 4 ,fontStyle:'italic' },
+  videoButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef3ff', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, justifyContent: 'center',  alignSelf: 'center', marginBottom: 14, width:'100%' },
+  videoButtonText: { color: '#005bff', fontSize: 12, fontWeight: '600' },
   brandRatingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   brandTitle: { fontSize: 20, fontWeight: '900', fontStyle: 'italic', color: '#111' },
   ratingBox: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   ratingStar: { color: '#005bff', fontSize: 14 },
   ratingScore: { fontSize: 14, fontWeight: 'bold', color: '#111' },
   reviewsCount: { fontSize: 13, color: '#888' },
-  productTitle: { fontSize: 18, fontWeight: '600', color: '#111', marginBottom: 16 },
+  productTitle: { fontSize: 20, fontWeight: '600', color: '#111', marginVertical: 10 },
   
-  personalPriceCard: { backgroundColor: '#005bff', padding: 14, borderRadius: 16, marginBottom: 12 },
+  personalPriceCard: { backgroundColor: '#1b6afbdd', padding: 14, borderRadius: 12, marginBottom: 12 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   personalLabel: { fontSize: 18, color: '#ffffff', fontWeight: '500' },
   priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
@@ -591,6 +625,51 @@ const styles = StyleSheet.create({
   measureLinkRow: { marginBottom: 16 },
   measureLinkText: { fontSize: 13, color: '#005bff', fontWeight: '600' },
   stockNoticeBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e7eceb75', padding: 18, borderRadius: 16, marginBottom: 20 },
+  availabilityCard: {
+    backgroundColor: '#f6f6f8',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    marginTop: 4,
+  },
+  availabilityCardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111',
+    marginBottom: 10,
+  },
+  availabilityRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 6,
+  },
+  availIconBox: {
+    width: 24,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  availMainText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111',
+    marginTop:10
+  },
+  availSubText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 4,
+  },
+  availOrangeText: {
+    fontSize: 12,
+    color: '#d9822b',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  availabilityDivider: {
+    height: 1,
+    backgroundColor: '#e8e8ed',
+    marginVertical: 10,
+  },
   stockNoticeText: { fontSize: 16, color: '#787a7d', marginHorizontal: 10 },
   sectionDivider: { height: 1, backgroundColor: '#eee', marginVertical: 16 },
   
@@ -623,9 +702,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 16, 
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8, 
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -633,9 +712,9 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     marginBottom: 120,
   },
-  pillOldPrice: { fontSize: 14, color: '#8b92a5', textDecorationLine: 'line-through', marginBottom: -2 },
+  pillOldPrice: { fontSize: 16, color: '#8b92a5', textDecorationLine: 'line-through', marginBottom: -2 },
   pillPrice: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
-  pillAddToCartBtn: { backgroundColor: '#005bff', paddingVertical: 12, paddingHorizontal: 40, borderRadius: 12 },
+  pillAddToCartBtn: { backgroundColor: '#005bff', paddingHorizontal: 40, borderRadius: 8, paddingVertical:10 ,},
   pillAddToCartText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 
   addedStateRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
@@ -665,7 +744,7 @@ const styles = StyleSheet.create({
   productDiscount: { fontSize: 14, color: '#ff3b30', fontWeight: 'bold' },
   productName: { fontSize: 17, color: '#333', marginTop: 4, height: 36, fontWeight: '500' },
   ratingText: { fontSize: 15, color: '#666', marginTop: 2 },
-  blueCartBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#005bff', justifyContent: 'center', alignItems: 'center' },
+  blueCartBtn: { width: 36, height: 30, borderRadius: 18, backgroundColor: '#005bff', justifyContent: 'center', alignItems: 'center' },
 
   continueShoppingBtn: { backgroundColor: '#eef3ff', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginBottom: 20 },
   continueShoppingText: { color: '#005bff', fontSize: 20, fontWeight: '600' },
