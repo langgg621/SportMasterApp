@@ -1,4 +1,4 @@
-import { MOCK_SHIPPING_METHODS,  } from '../data/mockData';
+import { MOCK_SHIPPING_METHODS } from '../data/mockData';
 import { ShippingMethod } from '../models/shipping';
 import { PaymentMethodType } from '../models/payment';
 import { Order, DeliveryMethod } from '../models/order';
@@ -12,14 +12,15 @@ export const orderController = {
   getShippingOptions(): ShippingMethod[] {
     return MOCK_SHIPPING_METHODS;
   },
-
   // Tính toán tổng tiền thanh toán realtime (tiền hàng + phí ship - điểm thưởng)
-  calculateTotal(shippingMethodId: string, bonusPoints: number = 0) {
+  calculateTotal(shippingMethodId?: string, bonusPoints: number = 0) {
     const cartState = cartController.getCartState();
-    const subtotal = cartState.totalAmount;
+    const subtotal = cartState?.totalAmount || 0;
     
-    // Tìm phí vận chuyển tương ứng
-    const shippingMethod = MOCK_SHIPPING_METHODS.find(m => m.id === shippingMethodId);
+    // Tìm phí vận chuyển tương ứng nếu có
+    const shippingMethod = shippingMethodId 
+      ? MOCK_SHIPPING_METHODS.find(m => m.id === shippingMethodId)
+      : null;
     const shippingFee = shippingMethod ? shippingMethod.price : 0;
 
     // Mỗi 1 điểm thưởng giảm 1 ₽
@@ -34,7 +35,40 @@ export const orderController = {
     };
   },
 
-  // Xác nhận đặt hàng và lưu vào danh sách đơn hàng
+  // Hàm tạo đơn hàng chính gọi từ CheckoutScreen
+createOrder(params: {
+    pickupPoint?: string;
+    deliveryType?: DeliveryMethod | 'pickup' | 'delivery';
+    paymentType?: PaymentMethodType | 'online' | 'cash';
+    usedBonusPoints?: number;
+    shippingMethodId?: string;
+  }): Order {
+    const cartState = cartController.getCartState();
+    const totals = this.calculateTotal(params.shippingMethodId, params.usedBonusPoints || 0);
+
+    // Thêm từ khóa const cho part2
+    const part1 = Math.floor(10000000 + Math.random() * 90000000);
+    const part2 = Math.floor(100000 + Math.random() * 900000);
+    const formattedOrderNumber = `${part1}-${part2}`;
+
+    const deliveryMethodValue: DeliveryMethod = 
+      params.deliveryType === 'delivery' ? 'delivery' : 'pickup';
+
+    const newOrder: Order = {
+      id: `ord_${Date.now()}`,
+      number: part1, 
+      orderNumber: formattedOrderNumber,
+      items: [...(cartState?.items || [])],
+      method: deliveryMethodValue,
+      pickupAddress: params.pickupPoint || 'Томск, улица Мусы Джалиля, Дом 59',
+      total: totals.total > 0 ? totals.total : cartState?.totalAmount || 0,
+    };
+
+    userOrdersList.unshift(newOrder);
+    return newOrder;
+  },
+
+  // Xác nhận đặt hàng và lưu vào danh sách đơn hàng (Bao bọc hàm createOrder)
   placeOrder(params: {
     deliveryMethod: DeliveryMethod;
     shippingMethodId: string;
@@ -42,26 +76,17 @@ export const orderController = {
     paymentMethod: PaymentMethodType;
     usedBonusPoints?: number;
   }): Order {
-    const cartState = cartController.getCartState();
-    const totals = this.calculateTotal(params.shippingMethodId, params.usedBonusPoints || 0);
+    const order = this.createOrder({
+      pickupPoint: params.pickupAddress,
+      deliveryType: params.deliveryMethod,
+      paymentType: params.paymentMethod,
+      usedBonusPoints: params.usedBonusPoints,
+      shippingMethodId: params.shippingMethodId,
+    });
 
-    const newOrder: Order = {
-      id: `ord_${Date.now()}`,
-      number: Math.floor(100000 + Math.random() * 900000), // Khớp kiểu number trong model order.tsx
-      orderNumber: `SM-${Math.floor(100000 + Math.random() * 900000)}`,
-      items: [...cartState.items],
-      method: params.deliveryMethod, // Khớp với trường 'method' trong model order.tsx
-      pickupAddress: params.pickupAddress,
-      total: totals.total, // Khớp với trường 'total' trong model order.tsx
-    };
+    
 
-    // Thêm vào danh sách đơn hàng của user
-    userOrdersList.unshift(newOrder);
-
-    // Đặt lại giỏ hàng sau khi đặt hàng thành công
-    cartController.clearCurrentCart();
-
-    return newOrder;
+    return order;
   },
 
   // Lấy lịch sử đơn hàng của người dùng

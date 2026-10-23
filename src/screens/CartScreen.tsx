@@ -19,7 +19,7 @@ import { cartController } from '../controllers/cartController';
 export default function CartScreen({ navigation }: { navigation: any }) {
   const hitProducts = productController.getProducts({}).slice(0, 4);
   const location = 'Томск, Буяновский переулок, 3А';
-
+  const [isFooterVisible, setIsFooterVisible] = useState(true);
   const [cartState, setCartState] = useState<any>({ items: [] });
   const [selectedItems, setSelectedItems] = useState<{ [key: string]: boolean }>({});
   const [useBonus, setUseBonus] = useState(true);
@@ -57,7 +57,18 @@ export default function CartScreen({ navigation }: { navigation: any }) {
       loadCartData();
     }, [loadCartData])
   );
+  const handleScroll = (event: any) => {
+  const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+  // Khoảng cách từ vị trí hiện tại đến đáy trang
+  const paddingToBottom = 50; 
+  const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
 
+    if (isCloseToBottom) {
+      setIsFooterVisible(false); // Cuộn đến cuối -> Ẩn footer
+    } else {
+      setIsFooterVisible(true);  // Chưa đến cuối -> Hiển thị footer
+    }
+  };
   const cartItems = cartState?.items || [];
   const cartItemsCount = cartItems.reduce((sum: number, item: any) => sum + (item?.quantity || 0), 0);
 
@@ -104,12 +115,11 @@ export default function CartScreen({ navigation }: { navigation: any }) {
     }
     setQuantityModalVisible(false);
   };
-
-const totalSelectedPrice = cartItems.reduce((sum: number, item: any) => {
-    if (!selectedItems[item.id]) return sum; 
-    const cleanPrice = parseInt(String(item?.product?.price || '0').replace(/[^0-9]/g, ''), 10) || 0;
-    return sum + cleanPrice * (item?.quantity || 1);
-  }, 0);
+    const totalSelectedPrice = cartItems.reduce((sum: number, item: any) => {
+        if (!selectedItems[item.id]) return sum;
+        const cleanPrice = parseInt(String(item?.product?.price || '0').replace(/[^0-9]/g, ''), 10) || 0;
+        return sum + cleanPrice * (item?.quantity || 1);
+    }, 0);
 
   // Kiểm tra nếu sản phẩm có giảm giá thực tế từ dữ liệu sản phẩm
   const availableBonus = totalSelectedPrice > 0 ? 200 : 0;
@@ -127,7 +137,8 @@ const totalSelectedPrice = cartItems.reduce((sum: number, item: any) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 160 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 160 }} showsVerticalScrollIndicator={false}onScroll={handleScroll}
+  scrollEventThrottle={400}>
         {/* Địa chỉ & Banner giao hàng */}
         <View style={{ paddingHorizontal: 16, marginTop: 10 }}>
           <TouchableOpacity style={styles.locationBar}>
@@ -183,16 +194,13 @@ const totalSelectedPrice = cartItems.reduce((sum: number, item: any) => {
 
                   <Image source={{ uri: item?.product?.images?.[0] }} style={styles.cardImg} />
 
-                  <View style={{ flex: 1, marginLeft: 10 }}>
+                  <View style={{ flex: 1, marginLeft: 10, }}>
                     <View style={styles.badgeRow}>
                       {item?.product?.discount && (
                         <View style={styles.discountBadge}>
                           <Text style={styles.discountText}>{item.product.discount}</Text>
                         </View>
                       )}
-                      <View style={styles.myDiscountBadge}>
-                        <Text style={styles.myDiscountText}>Моя скидка</Text>
-                      </View>
                     </View>
 
                     <Text style={styles.cardTitle} numberOfLines={2}>{item?.product?.name}</Text>
@@ -208,7 +216,7 @@ const totalSelectedPrice = cartItems.reduce((sum: number, item: any) => {
                       {/* Dropdown nút chọn số lượng dạng Modal picker */}
                       <TouchableOpacity style={styles.qtyDropdownBtn} onPress={() => openQuantityModal(item)}>
                         <Text style={styles.qtyDropdownBtnText}>{item.quantity}</Text>
-                        <Ionicons name="chevron-down" size={14} color="#111" />
+                        <Ionicons name="chevron-down" size={18} color="#111" />
                       </TouchableOpacity>
                     </View>
 
@@ -286,11 +294,19 @@ const totalSelectedPrice = cartItems.reduce((sum: number, item: any) => {
                       <Text style={styles.paymentTitle}>{method.title}</Text>
                       <View style={styles.tagAvailable}><Text style={styles.tagAvailableText}>Доступно</Text></View>
                     </View>
-                    <Text style={styles.paymentDesc} numberOfLines={1}>{method.desc}</Text>
+                    <Text style={styles.paymentDesc} numberOfLines={2}>{method.desc}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color="#888" />
                 </TouchableOpacity>
               ))}
+          <View style={{}}>
+          <View style={styles.checkoutBtnWrapper}>
+            <TouchableOpacity style={styles.checkoutBtn} onPress={() => navigation.navigate('Checkout')}>
+              <Text style={styles.checkoutBtnText}>Перейти к оформлению</Text>
+            </TouchableOpacity>
+
+          </View>
+        </View>
             </View>
           </View>
         )}
@@ -332,7 +348,7 @@ const totalSelectedPrice = cartItems.reduce((sum: number, item: any) => {
       </ScrollView>
 
       {/* Floating Footer Thanh toán */}
-      {cartItemsCount > 0 && totalSelectedPrice > 0 && (
+      {cartItemsCount > 0 && totalSelectedPrice > 0 && isFooterVisible && (
         <View style={styles.floatingFooterPill}>
           <View style={styles.pillPriceBox}>
             <Text style={styles.pillPrice}>{finalCalculatedPrice.toLocaleString()} ₽</Text>
@@ -382,7 +398,7 @@ const totalSelectedPrice = cartItems.reduce((sum: number, item: any) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: { height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderColor: '#f0f0f0', paddingHorizontal: 16 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#111' },
   shareBtn: { position: 'absolute', right: 16 },
   locationBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f6f6f8', padding: 12, borderRadius: 16 },
   locationPin: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#005bff', justifyContent: 'center', alignItems: 'center', marginRight: 8 },
@@ -405,16 +421,14 @@ const styles = StyleSheet.create({
   cartCard: { flexDirection: 'row', backgroundColor: '#fff', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   cardImg: { width: 72, height: 80, borderRadius: 8, resizeMode: 'cover', backgroundColor: '#f6f6f8' },
   badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  discountBadge: { backgroundColor: '#ff3b30', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4 },
-  discountText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-  myDiscountBadge: { backgroundColor: '#ffebe8', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
-  myDiscountText: { color: '#ff3b30', fontSize: 10, fontWeight: '600' },
-  cardTitle: { fontSize: 14, fontWeight: '600', color: '#111', lineHeight: 18 },
-  cardMeta: { fontSize: 12, color: '#888', marginTop: 2 },
+  discountBadge: { backgroundColor: '#ff3b30', paddingHorizontal: 5, paddingVertical: 8, borderRadius: 4 },
+  discountText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  cardTitle: { fontSize: 18, fontWeight: '500', color: '#111', lineHeight: 18, marginVertical:15 },
+  cardMeta: { fontSize: 16, color: '#888', marginTop: 6 },
   priceQtyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 8 },
-  cardOldPrice: { fontSize: 12, color: '#aaa', textDecorationLine: 'line-through' },
-  cardPrice: { fontSize: 16, fontWeight: 'bold', color: '#111' },
-  qtyDropdownBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f6f6f8', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, gap: 6 },
+  cardOldPrice: { fontSize: 14, color: '#aaa', textDecorationLine: 'line-through' },
+  cardPrice: { fontSize: 18, fontWeight: 'bold', color: '#111' },
+  qtyDropdownBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f6f6f8', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, gap: 6 },
   qtyDropdownBtnText: { fontSize: 14, fontWeight: '600', color: '#111' },
   recommendLink: { fontSize: 12, color: '#005bff', fontWeight: '600', marginTop: 8 },
   promoInputBox: { backgroundColor: '#f6f6f8', borderRadius: 12, paddingHorizontal: 16, height: 48, justifyContent: 'center', marginBottom: 12 },
@@ -435,10 +449,10 @@ const styles = StyleSheet.create({
   cashbackText: { fontSize: 13, color: '#666' },
   cashbackBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, gap: 4 },
   cashbackBadgeText: { fontSize: 12, fontWeight: 'bold', color: '#111' },
-  paymentMethodCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f6f6f8', padding: 14, borderRadius: 16, marginBottom: 8 },
+  paymentMethodCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, marginBottom: 8 },
   paymentIconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#eef3ff', justifyContent: 'center', alignItems: 'center' },
-  paymentTitle: { fontSize: 14, fontWeight: 'bold', color: '#111' },
-  paymentDesc: { fontSize: 12, color: '#666', marginTop: 2 },
+  paymentTitle: { fontSize: 18, fontWeight: '500', color: '#111' },
+  paymentDesc: { fontSize: 14, color: '#666', marginTop: 4 },
   tagAvailable: { backgroundColor: '#eafbf1', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
   tagAvailableText: { fontSize: 10, fontWeight: 'bold', color: '#00a651' },
   hitsSection: { marginTop: 24, paddingHorizontal: 16 },
@@ -451,12 +465,12 @@ const styles = StyleSheet.create({
   productPrice: { fontSize: 16, fontWeight: 'bold', color: '#111' },
   productName: { fontSize: 13, color: '#333', marginTop: 4, height: 36, fontWeight: '500' },
   blueCartBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#005bff', justifyContent: 'center', alignItems: 'center' },
-  floatingFooterPill: { position: 'absolute', bottom: 90, left: 20, right: 20, backgroundColor: '#171d31', borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 16, elevation: 10 },
+  floatingFooterPill: { position: 'absolute', bottom: 130, left: 20, right: 20, backgroundColor: '#171d31', borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: 16, elevation: 10,  },
   pillPriceBox: { flex: 1 },
   pillPrice: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
   checkoutBtnWrapper: { position: 'relative' },
-  checkoutBtn: { backgroundColor: '#005bff', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 12 },
-  checkoutBtnText: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
+  checkoutBtn: { backgroundColor: '#005bff', paddingVertical: 8, paddingHorizontal: 28, borderRadius: 10, alignItems: 'center', justifyContent:'center' },
+  checkoutBtnText: { color: '#fff', fontSize: 20, fontWeight: '500', alignItems: 'center', justifyContent:'center'},
   coinBadge: { position: 'absolute', top: -10, right: -8, backgroundColor: '#fff', borderRadius: 12, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 2, borderWidth: 2, borderColor: '#f2b80b' },
   coinText: { fontSize: 11, fontWeight: 'bold', color: '#111' },
 

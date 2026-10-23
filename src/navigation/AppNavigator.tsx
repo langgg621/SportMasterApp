@@ -17,6 +17,7 @@ import FilterScreen from '../screens/FilterScreen';
 import CatelogyScreen from '../screens/CatelogyScreen';
 import ServiceScreen from '../screens/ServiceScreen';
 import SearchResultScreen from '../screens/SearchResultScreen';
+import OrderSuccessScreen from'../screens/OrderSuccessScreen';
 // Import FloatingNavBar
 import FloatingNavBar from '../components/FloatingNavBar';
 
@@ -77,6 +78,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Filter" component={FilterScreen} />
         <Stack.Screen name="SearchScreen" component={SearchScreen} />
         <Stack.Screen name="SearchResult" component={SearchResultScreen} />
+        <Stack.Screen name="OrderSuccessScreen" component={OrderSuccessScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>

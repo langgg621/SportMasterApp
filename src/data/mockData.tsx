@@ -573,22 +573,22 @@ export const SPORTS_LIST = [
 ];
 export const PAYMENT_METHODS = [
   {
-    id: 'split',
-    title: 'Оплатить Яндекс Сплит',
+    id: 'sber',
+    title: 'СБП',
     desc: 'Покупайте сразу, а оплату делите на части со скидкой до 5% от 7000Р',
     icon: 'card-outline',
     isIonIcon: true,
   },
   {
-    id: 'playt',
-    title: 'Оплатить ПЛАЙТ',
+    id: 'SberPay',
+    title: 'SberPay',
     desc: 'Оплата частями',
     icon: 'wallet-outline',
     isIonIcon: false,
   },
   {
-    id: 'sber',
-    title: 'В рассрочку от Сбербанка',
+    id: 'Картой',
+    title: 'Картой',
     desc: 'При оформлении заказа укажите способ оплаты «Рассрочка со Сбербанком»',
     icon: 'shield-checkmark-outline',
     isIonIcon: true,

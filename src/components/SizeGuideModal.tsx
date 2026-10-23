@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SizeGuideModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   // Dữ liệu bảng size chuẩn theo Sportmaster / PUMA
