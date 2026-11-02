@@ -26,6 +26,7 @@ export const cartController = {
         quantity,
         selectedSize,
         selectedColor,
+        image: product.image,
       };
       currentCart.items.push(newItem);
     }

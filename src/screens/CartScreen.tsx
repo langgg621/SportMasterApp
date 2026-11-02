@@ -273,7 +273,7 @@ export default function CartScreen({ navigation }: { navigation: any }) {
                     <Text style={styles.cashbackText}>Бонусы за покупку</Text>
                     <View style={styles.cashbackBadge}>
                       <Text style={{ fontSize: 11 }}>🟡</Text>
-                      <Text style={styles.cashbackBadgeText}>+300</Text>
+                      <Text style={styles.cashbackBadgeText}>+200</Text>
                     </View>
                   </View>
                 )}
