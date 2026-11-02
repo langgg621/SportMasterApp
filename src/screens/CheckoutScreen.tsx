@@ -16,7 +16,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { cartController } from '../controllers/cartController';
 import { userController } from '../controllers/userController';
 import { orderController } from '../controllers/orderController';
-
+import { WebView } from 'react-native-webview';
 export default function CheckoutScreen({ navigation }: { navigation: any }) {
   const [cartState, setCartState] = useState<any>({ items: [] });
   const [userInfo, setUserInfo] = useState<any>({ name: '', phone: '', email: '' });
@@ -334,27 +334,10 @@ export default function CheckoutScreen({ navigation }: { navigation: any }) {
           </View>
 
           <View style={styles.mapContainer}>
-            <MapView
-              style={styles.realMap}
-              initialRegion={{
-                latitude: 56.4846,
-                longitude: 84.9476,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-            >
-              <Marker
-                coordinate={{ latitude: 56.4846, longitude: 84.9476 }}
-                title="Томск, улица Мусы Джалиля, Дом 59"
-              >
-                <View style={styles.mapPinMarker}>
-                  <View style={styles.pinIconBox}>
-                    <Ionicons name="cube" size={14} color="#fff" />
-                  </View>
-                  <Text style={styles.pinMarkerText}>1 из 1</Text>
-                </View>
-              </Marker>
-            </MapView>
+            <WebView
+                source={{ uri: 'https://www.openstreetmap.org/export/embed.html?bbox=84.92%2C56.46%2C84.98%2C56.50&layer=mapnik&marker=56.4846%2C84.9476' }}
+                style={styles.realMap}
+              />
 
             <TouchableOpacity style={styles.myLocationBtn}>
               <Ionicons name="navigate-outline" size={20} color="#111" />
