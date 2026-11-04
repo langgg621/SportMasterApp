@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
   chipTextActive: { color: '#fff', fontWeight: '600' },
 
   mapContainer: { flex: 1, minHeight: 220, position: 'relative', backgroundColor: '#e8eaed' },
-  realMap: { ...StyleSheet.absoluteFillObject },
+  realMap: { ...StyleSheet.absoluteFill },
   customPinContainer: {
     position: 'absolute',
     top: '45%',
