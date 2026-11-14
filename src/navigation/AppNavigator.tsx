@@ -1,12 +1,9 @@
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useCart } from '../hooks/useCart';
-import React, { useState, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { cartController } from '../controllers/cartController';
 
-// Import các màn hình
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import CartScreen from '../screens/CartScreen';
@@ -15,59 +12,58 @@ import ProductDetailScreen from '../screens/ProductDetailScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
 import FilterScreen from '../screens/FilterScreen';
 import CatelogyScreen from '../screens/CatelogyScreen';
-import ServiceScreen from '../screens/ServiceScreen';
 import SearchResultScreen from '../screens/SearchResultScreen';
-import OrderSuccessScreen from'../screens/OrderSuccessScreen';
-// Import FloatingNavBar
+import OrderSuccessScreen from '../screens/OrderSuccessScreen';
+import NoInternetScreen from '../screens/OfflineScreen';
 import FloatingNavBar from '../components/FloatingNavBar';
+import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// route trong Tab <-> nhãn trên FloatingNavBar
+const ROUTE_TO_LABEL: Record<string, string> = {
+  HomeTab: 'Главная',
+  CatelogyTab: 'Каталог',
+  ServicesTab: 'Сервисы',
+  CartTab: 'Корзина',
+  ProfileTab: 'Профиль',
+};
+const LABEL_TO_ROUTE = Object.fromEntries(Object.entries(ROUTE_TO_LABEL).map(([r, l]) => [l, r]));
+
 function CustomTabNavigator() {
-  const { totalCount: totalCartCount, refresh: refreshCart } = useCart();
+  const { totalCount } = useCart(); // store dùng chung -> badge luôn đúng
 
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
-      tabBar={({ state, navigation }) => {
-        const currentRouteName = state.routeNames[state.index];
-        
-        let activeLabel = 'Главная';
-        if (currentRouteName === 'HomeTab') activeLabel = 'Главная';
-        if (currentRouteName === 'CatelogyTab') activeLabel = 'Каталог';
-        if (currentRouteName === 'ServicesTab') activeLabel = 'Сервисы';
-        if (currentRouteName === 'CartTab') activeLabel = 'Корзина';
-        if (currentRouteName === 'ProfileTab') activeLabel = 'Профиль';
-
-        return (
-          <FloatingNavBar
-            activeTab={activeLabel}
-            cartCount={totalCartCount}
-            onTabPress={(tabName) => {
-              if (tabName === 'Главная') navigation.navigate('HomeTab');
-              if (tabName === 'Каталог') navigation.navigate('CatelogyTab');
-              if (tabName === 'Сервисы') navigation.navigate('ServicesTab');
-              if (tabName === 'Корзина') navigation.navigate('CartTab');
-              if (tabName === 'Профиль') navigation.navigate('ProfileTab');
-            }}
-            onStorePress={() => {
-            }}
-          />
-        );
-      }}
+      tabBar={({ state, navigation }) => (
+        <FloatingNavBar
+          activeTab={ROUTE_TO_LABEL[state.routeNames[state.index]] ?? 'Главная'}
+          cartCount={totalCount}
+          onTabPress={(tabName) => {
+            const route = LABEL_TO_ROUTE[tabName];
+            if (route) navigation.navigate(route);
+          }}
+          onStorePress={() => {}}
+        />
+      )}
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} />
       <Tab.Screen name="CatelogyTab" component={CatelogyScreen} />
-      <Tab.Screen name="ServicesTab" component={ServiceScreen} /> 
       <Tab.Screen name="CartTab" component={CartScreen} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} />
-      <Tab.Screen name="ProductDetail" component={ProductDetailScreen} />
-      <Tab.Screen name="SearchResult" component={SearchResultScreen} />
     </Tab.Navigator>
   );
 }
 
+/**
+ * ProductDetail, SearchResult, NoInternetScreen trước đây bị khai báo ở CẢ Tab lẫn Stack.
+ * Khi mở từ tab, React Navigation dùng bản trong Tab -> thanh tabBar của navigator + FloatingNavBar
+ * do chính màn hình vẽ => bị 2 thanh nav chồng nhau. Giờ chỉ khai báo ở Stack; các màn này tự vẽ
+ * FloatingNavBar bằng useFloatingNav().
+ */
 export default function AppNavigator() {
   return (
     <NavigationContainer>
@@ -79,7 +75,9 @@ export default function AppNavigator() {
         <Stack.Screen name="SearchScreen" component={SearchScreen} />
         <Stack.Screen name="SearchResult" component={SearchResultScreen} />
         <Stack.Screen name="OrderSuccessScreen" component={OrderSuccessScreen} />
-
+        <Stack.Screen name="NoInternetScreen" component={NoInternetScreen} />
+        <Stack.Screen name="LoginScreen" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="RegisterScreen" component={RegisterScreen} options={{ headerShown: false }} />  
       </Stack.Navigator>
     </NavigationContainer>
   );

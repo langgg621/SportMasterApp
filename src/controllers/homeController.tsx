@@ -1,43 +1,23 @@
-import { 
-  MOCK_BRANDS, 
-  MOCK_BANNERS, 
-  MOCK_GENDER_TARGETS, 
-  MOCK_SERVICE_SECTIONS,
-  MOCK_CAROUSEL_BANNERS,
-  MOCK_HOME_SERVICES,
-  CATEGORIES_BY_GENDER,
-  SPORTS_LIST 
-} from '../data/mockData';
+import { apiClient } from './apiClient';
+import { Banner, CatalogSection, Product } from '../models';
 
 export const homeController = {
-  // Lấy danh sách thương hiệu
-  getBrands: () => {
-    return MOCK_BRANDS;
+  // Lấy banner trang chủ
+  getBanners: async (type?: number): Promise<Banner[]> => {
+    const url = type ? `/banners?type=${type}` : '/banners';
+    const res = await apiClient.get(url);
+    return res.data;
   },
 
-  // Lấy danh sách banner khuyến mãi đầu trang
-  getPromoBanners: () => {
-    return MOCK_BANNERS;
+  // Lấy các khối danh mục (Giới tính, Môn thể thao)
+  getCatalogSections: async (): Promise<CatalogSection[]> => {
+    const res = await apiClient.get('/catalog/sections');
+    return res.data;
   },
 
-  // Lấy danh sách nhóm đối tượng (Женщинам, Мужчинам, Детям)
-  getGenderTargets: () => {
-    return MOCK_GENDER_TARGETS;
-  },
-    getCarouselBanners: () => {
-    return MOCK_CAROUSEL_BANNERS;
-  },
-  getHomeServices: () => {return MOCK_HOME_SERVICES;},
-  // Lấy danh mục sản phẩm theo đối tượng trên màn Home
-getCategoriesByGender: (genderKey: 'Женщинам' | 'Мужчинам' | 'Детям') => {
-    return CATEGORIES_BY_GENDER[genderKey] || CATEGORIES_BY_GENDER['Женщинам'];
-  },
-
-  // Lấy dịch vụ phổ biến
-  getPopularServices: () => {
-    return MOCK_SERVICE_SECTIONS;
-  },
-  getSports: () => {
-    return SPORTS_LIST;
-  },
+  // Lấy Flash Sale (Daily Deals)
+  getDailyDeals: async (limit = 10): Promise<Product[]> => {
+    const res = await apiClient.get(`/banners/daily-deals?limit=${limit}`);
+    return res.data;
+  }
 };

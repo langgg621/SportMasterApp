@@ -1,25 +1,31 @@
-import { MOCK_USER_PROFILE } from '../data/mockData';
-import { User } from '../models/user';
-
-let currentUserProfile: User = { ...MOCK_USER_PROFILE };
+import { apiClient } from './apiClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { User, ProfileMenuItem } from '../models';
 
 export const userController = {
-  // Lấy thông tin profile người dùng
-  getUserProfile(): User {
-    return currentUserProfile;
+  login: async (email: string, password: string): Promise<{ token: string; data: User }> => {
+    const res = await apiClient.post('/users/login', { email, password });
+    // Lưu token vào máy
+    await AsyncStorage.setItem('@SportMaster:token', res.token);
+    return res;
   },
 
-  // Cập nhật thông tin profile
-  updateUserProfile(updatedData: Partial<User>): User {
-    currentUserProfile = {
-      ...currentUserProfile,
-      ...updatedData,
-    };
-    return currentUserProfile;
+  register: async (data: any): Promise<{ token: string; data: User }> => {
+    const res = await apiClient.post('/users/register', data);
+    await AsyncStorage.setItem('@SportMaster:token', res.token);
+    return res;
   },
 
-  // Cập nhật điểm thưởng hoặc vị trí địa lý
-  updateLocation(newLocation: string): void {
-    currentUserProfile.location = newLocation;
+  getMe: async (): Promise<User> => {
+    const res = await apiClient.get('/users/me');
+    return res.data;
   },
+
+  logout: async () => {
+    await AsyncStorage.removeItem('@SportMaster:token');
+  },
+  getProfileMenu: async (): Promise<ProfileMenuItem[]> => {
+    const res = await apiClient.get('/profile/menu');
+    return res.data;
+  }
 };

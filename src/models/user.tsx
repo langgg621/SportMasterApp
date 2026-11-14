@@ -1,29 +1,21 @@
-import { Product } from "./product";
-
-export interface UserAddress {
-  id: string;
-  city: string;
-  street: string;
-  house: string;
-  apartment?: string;
-  isDefault?: boolean;
-}
-
 export interface User {
   id: string;
-  name: string;
-  phone: string;
+  fullName: string;
+  userName?: string | null;
   email: string;
+  phone?: string | null;
+  address?: string | null;
+  sex?: number | null;              // 0: Nữ, 1: Nam
   bonusPoints: number;
-  bonusExpiry: string;
-  location: string;
-  clubLevel: string;
-  cashback: string;
-  avatarUrl?: string;
+  membershipRank: number;           // 1: Thường, 2: Vàng, 3: VIP
+  createdAt?: string;
+  updatedAt?: string | null;
 }
 
-export interface UpdateUserDTO {
-  name?: string;
-  phone?: string;
-  avatarUrl?: string;
+export interface BonusPoint {
+  bonusId: number;
+  userId: string;
+  bonusPoint: number;
+  bonusExpired?: string;
+  isActive: boolean;
 }

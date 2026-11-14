@@ -1,74 +1,70 @@
-import { GenderTargetType } from './genderTarget';
+export interface ProductSize {
+  sizeID: string;
+  size: string;
+  stock: number;
+  cm?: number | null;               // Chiều dài chân (nếu có)
+}
+
+export interface ProductColor {
+  colorID: string;
+  name: string;
+  type?: string;                    // Mã màu (vd: 'white', 'black')
+}
 
 export interface Product {
   id: string;
-  name: string;
-  description?: string;
+  productName: string;
+  sku?: string | null;
   price: number;
-  oldPrice?: number;
-  discount?: string;
-  rating: number;
-  reviewsCount: number;
+  discount?: number | null;
+  categoryId?: string;
+  brandId?: string;
+  gender?: number | null;           // 1: Nam, 2: Nữ, 3: Unisex
+  season?: string | null;
+  sportType?: string | null;
+  upperMaterial?: string | null;
+  fastener?: string | null;
+  waterProtection?: string | null;
+  insulation?: string | null;
   
-  // Phân loại nhóm đối tượng (Nam, Nữ, Trẻ em)
-  targetGroup: GenderTargetType; // 'MEN' | 'WOMEN' | 'KIDS' | 'UNISEX'
-  
-  categoryId: string;
-  brandId: string;
-  
-  images: string[];
-  stock: number;
-  sizes?: string[];
-  colors?: string[];          // Ví dụ: ['Бежевый', 'Белый', 'Черный']
-  productType?: string;
-  // --- BỔ SUNG CÁC TRƯỜNG PHỤC VỤ MÀN HÌNH LỌC (FILTER) ---
-  sport?: string;             // Вид спорта
-  season?: string;            // Сезон
-  collab?: string;            // Коллаборация
-  collection?: string;        // Легендарные коллекции
-  closure?: string;           // Застежка
-  pronation?: string;         // Тип пронации
-  training?: string;          // Тип тренировки
-  soleColor?: string;         // Цвет подошвы
-  fitWidth?: string;          // Полнота
-  material?: string;          // Материал верха
-  surface?: string;           // Покрытие
-  waterproof?: string;        // Защита от влаги
-  insulation?: string;        // Утеплитель
-  features?: string[];        // Особенности модели
-  technologies?: string[];    // Технологии
-  
-  isHotDeal?: boolean;        // Товары со скидкой / Лучшая цена
-  isNew?: boolean;            // Новая коллекция / Новые бренды
-  saleCampaignId?: string;    // Liên kết với chương trình Sale nếu có
-  
-  createdAt: string;
-  updatedAt: string;
+  isSale?: boolean;
+  isBestPrice?: boolean;
+  isNewCollection?: boolean;
+  isComingSoon?: boolean;
+  isExclusive?: boolean;
+  isPremium?: boolean;
+  isEco?: boolean;
+
+  imageUrl: string;
+  description?: string | null;
+  createdDate?: string;
+
+  // Computed fields (Backend tự tính toán trả về)
+  newPrice?: number;
+  brandName?: string;
+  categoryName?: string;
+  totalStock?: number;
+  avgRating?: number;
+  reviewCount?: number;
+  bonusAmount?: number;
+
+  // Mảng JSON được Backend parse sẵn
+  sizes?: ProductSize[];
+  colors?: ProductColor[];
+  technologies?: string[];
+  characteristics?: { key: string; value: string }[];
+  collections?: string[];
 }
 
-// DTO dùng cho việc Thêm mới sản phẩm (Create)
-export interface CreateProductDTO {
-  name: string;
-  description?: string;
-  price: number;
-  oldPrice?: number;
-  targetGroup: GenderTargetType;
-  categoryId: string;
-  brandId: string;
-  images: string[];
-  stock: number;
-  sizes?: string[];
-  colors?: string[];
-  sport?: string;
-  season?: string;
-  closure?: string;
-  material?: string;
-  surface?: string;
-  isHotDeal?: boolean;
-  isNew?: boolean;
+export interface ProductSection {
+  sectionKey: string;
+  title: string;
+  body: string;
 }
 
-// DTO dùng cho việc Chỉnh sửa sản phẩm (Update)
-export interface UpdateProductDTO extends Partial<CreateProductDTO> {
-  id: string;
+export interface ProductSpec {
+  groupTitle: string;
+  label: string;
+  value: string;
+  sortOrder: number;
 }

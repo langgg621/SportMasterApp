@@ -1,20 +1,25 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useCart } from '../hooks/useCart'; // 1. Import hook giỏ hàng
 
 interface FloatingNavBarProps {
   activeTab?: string;
-  cartCount?: number; // Thêm prop cartCount
+  cartCount?: number; 
   onTabPress?: (tabName: string) => void;
   onStorePress?: () => void;
 }
 
 export default function FloatingNavBar({ 
   activeTab = 'Главная', 
-  cartCount = 0,
+  cartCount, // Nhận từ props
   onTabPress, 
   onStorePress 
 }: FloatingNavBarProps) {
+  // 2. Lấy số lượng thật từ API (nếu màn hình cha không truyền cartCount)
+  const { totalCount } = useCart();
+  const badgeCount = cartCount !== undefined ? cartCount : totalCount;
+
   const navItems = [
     { name: 'home', label: 'Главная' },
     { name: 'catalog', label: 'Каталог' },
@@ -33,8 +38,6 @@ export default function FloatingNavBar({
 
   return (
     <>
-
-
       <View style={styles.bottomNav}>
         {navItems.map(({ name, label }) => {
           const isSelected = activeTab === label;
@@ -51,11 +54,11 @@ export default function FloatingNavBar({
                 <Ionicons 
                   name={iconMap[name]} size={22} color={isSelected ? '#086ee7' : '#b4b7bd'} 
                 />
-                {/* Badge hiển thị số lượng giỏ hàng */}
-                {isCart && cartCount > 0 && (
+                {/* 3. Sử dụng badgeCount thay vì cartCount */}
+                {isCart && badgeCount > 0 && (
                   <View style={styles.cartBadge}>
                     <Text style={styles.cartBadgeText}>
-                      {cartCount > 99 ? '99+' : cartCount}
+                      {badgeCount > 99 ? '99+' : badgeCount}
                     </Text>
                   </View>
                 )}
@@ -126,7 +129,6 @@ const styles = StyleSheet.create({
     color: '#086ee7',
     fontWeight: '700',
   },
-  /* Badge đỏ hiển thị số lượng sản phẩm trên icon giỏ hàng */
   cartBadge: {
     position: 'absolute',
     top: -4,
