@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { cartController } from '../controllers/cartController';
 import { CartItem } from '../models';
 
@@ -26,13 +27,23 @@ export const useCart = () => {
   };
 
   // 1. Lấy giỏ hàng từ API
-  const fetchCart = useCallback(async () => {
+    const fetchCart = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // 1. KIỂM TRA TOKEN TRƯỚC KHI GỌI API
+      const token = await AsyncStorage.getItem('@SportMaster:token');
+      if (!token) {
+        updateGlobalCart([]); // Nếu không có token -> Giỏ hàng rỗng
+        return; 
+      }
+
+      // 2. Nếu có token -> Gọi API
       const data = await cartController.getCart();
       updateGlobalCart(data);
     } catch (error) {
       console.error('Lỗi lấy giỏ hàng:', error);
+      updateGlobalCart([]); // Nếu lỗi (vd: token hết hạn) cũng reset về rỗng
     } finally {
       setLoading(false);
     }

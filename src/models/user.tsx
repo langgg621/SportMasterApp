@@ -10,6 +10,7 @@ export interface User {
   membershipRank: number;           // 1: Thường, 2: Vàng, 3: VIP
   createdAt?: string;
   updatedAt?: string | null;
+  password: string;
 }
 
 export interface BonusPoint {

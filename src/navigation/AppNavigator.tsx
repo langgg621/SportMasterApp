@@ -18,6 +18,9 @@ import NoInternetScreen from '../screens/OfflineScreen';
 import FloatingNavBar from '../components/FloatingNavBar';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import MapPickerScreen from '../screens/MapPickerScreen';
+import OrderHistoryScreen from '../screens/OrderHistoryScreen';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -77,7 +80,9 @@ export default function AppNavigator() {
         <Stack.Screen name="OrderSuccessScreen" component={OrderSuccessScreen} />
         <Stack.Screen name="NoInternetScreen" component={NoInternetScreen} />
         <Stack.Screen name="LoginScreen" component={LoginScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="RegisterScreen" component={RegisterScreen} options={{ headerShown: false }} />  
+        <Stack.Screen name="RegisterScreen" component={RegisterScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="MapPicker" component={MapPickerScreen} options={{ headerShown: false }} /> 
+        <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} options={{ headerShown: false }} /> 
       </Stack.Navigator>
     </NavigationContainer>
   );

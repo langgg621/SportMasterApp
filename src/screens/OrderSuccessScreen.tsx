@@ -1,60 +1,76 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { orderController } from '../controllers/orderController';
+import { systemKeyController } from '../controllers/systemKeyController';
 import { useCountdown } from '../hooks/useCountdown';
 import { OrderConfirmation } from '../models/order';
-
-// Vì Backend chưa có API lấy phương thức thanh toán, ta dùng tạm mảng tĩnh này
-const PAYMENT_METHODS = [
-  { id: 'sber', title: 'СБП', icon: 'card-outline', isIonIcon: true },
-  { id: 'sberpay', title: 'SberPay', icon: 'wallet-outline', isIonIcon: false },
-  { id: 'card', title: 'Картой', icon: 'credit-card-outline', isIonIcon: true },
-];
+import { SystemKey } from '../models/systemKey';
 
 export default function OrderSuccessScreen({ navigation, route }: { navigation: any; route: any }) {
   const orderId = route?.params?.orderId;
 
   const [order, setOrder] = useState<OrderConfirmation | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedPaymentId, setSelectedPaymentId] = useState<string>('sber');
+  const [paying, setPaying] = useState(false); // Trạng thái đang thanh toán
+  
+  // State cho phương thức thanh toán
+  const [paymentMethods, setPaymentMethods] = useState<SystemKey[]>([]);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string>('');
 
-  // Gọi API thật để lấy thông tin xác nhận đơn hàng
+  // Lấy dữ liệu đơn hàng và danh sách thanh toán
   useEffect(() => {
-    const fetchOrder = async () => {
+    const fetchData = async () => {
       try {
-        const data = await orderController.getConfirmation(orderId);
-        setOrder(data);
+        const [orderData, paymentData] = await Promise.all([
+          orderController.getConfirmation(orderId),
+          systemKeyController.getByParentID(10) // 10 = PAYMENT_TYPE
+        ]);
+        setOrder(orderData);
+        setPaymentMethods(paymentData || []);
+        if (paymentData && paymentData.length > 0) setSelectedPaymentId(paymentData[0].codeKey);
       } catch (error) {
-        console.error('Lỗi lấy đơn hàng:', error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
-    fetchOrder();
+    fetchData();
   }, [orderId]);
 
-  // Hạn thanh toán lấy từ DB (payBefore)
   const { hours, minutes, seconds } = useCountdown(order?.payBefore);
 
-  if (loading) {
-    return <ActivityIndicator size="large" style={{ flex: 1, justifyContent: 'center' }} />;
-  }
+  // HÀM XỬ LÝ THANH TOÁN
+  const handlePayment = async () => {
+    setPaying(true);
+    try {
+      // Giả lập delay 1.5s cho giống gọi API ngân hàng
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Cập nhật trạng thái đơn hàng thành 2 (В пути - Đã thanh toán)
+      await orderController.updateOrderStatus(orderId, 2);
+      
+      // Load lại thông tin đơn hàng để cập nhật trạng thái mới
+      const updatedOrder = await orderController.getConfirmation(orderId);
+      setOrder(updatedOrder);
+      
+      Alert.alert('Успешно', 'Заказ успешно оплачен!');
+    } catch (error: any) {
+      Alert.alert('Ошибка', 'Не удалось оплатить заказ');
+    } finally {
+      setPaying(false);
+    }
+  };
 
-  if (!order) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <Text style={{ textAlign: 'center', marginTop: 40, fontSize: 16 }}>Заказ не найден</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('MainTabs')} style={{ marginTop: 20, alignSelf: 'center' }}>
-          <Text style={{ color: '#005bff', fontSize: 16 }}>Вернуться на главную</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
+  if (loading) return <ActivityIndicator size="large" style={{ flex: 1, justifyContent: 'center' }} />;
+  if (!order) return <Text style={{ textAlign: 'center', marginTop: 40 }}>Заказ не найден</Text>;
 
   const items = order.items || [];
   const totalItemsCount = items.reduce((sum, item) => sum + (item?.quantity || 1), 0);
+  
+  // Kiểm tra xem đơn hàng đã thanh toán chưa (Status = 1 là chưa thanh toán)
+  const isPendingPayment = order.status === 1;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -91,48 +107,62 @@ export default function OrderSuccessScreen({ navigation, route }: { navigation: 
 
         <Text style={styles.totalAmountText}>Сумма заказа: {order.totalAmount?.toLocaleString('ru-RU')} ₽</Text>
 
-        <View style={styles.timerBanner}>
-          <Text style={styles.timerBannerText}>Ждёт оплаты</Text>
-          <View style={styles.timerRow}>
-            <Ionicons name="time-outline" size={16} color="#fff" />
-            <Text style={styles.timerText}>{`${hours} : ${minutes} : ${seconds}`}</Text>
-          </View>
-        </View>
+        {/* CHỈ HIỂN THỊ KHỐI THANH TOÁN NẾU TRẠNG THÁI LÀ 1 (CHỜ THANH TOÁN) */}
+        {isPendingPayment ? (
+          <>
+            <View style={styles.timerBanner}>
+              <Text style={styles.timerBannerText}>Ждёт оплаты</Text>
+              <View style={styles.timerRow}>
+                <Ionicons name="time-outline" size={16} color="#fff" />
+                <Text style={styles.timerText}>{`${hours} : ${minutes} : ${seconds}`}</Text>
+              </View>
+            </View>
 
-        <View style={{ marginTop: 20 }}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.sectionTitle}>Способ оплаты</Text>
-            <TouchableOpacity><Text style={styles.linkText}>Все</Text></TouchableOpacity>
-          </View>
+            <View style={{ marginTop: 20 }}>
+              <View style={styles.rowBetween}>
+                <Text style={styles.sectionTitle}>Способ оплаты</Text>
+                <TouchableOpacity><Text style={styles.linkText}>Все</Text></TouchableOpacity>
+              </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.paymentMethodsRow}>
-            {PAYMENT_METHODS.map((method) => {
-              const isSelected = selectedPaymentId === method.id;
-              const color = isSelected ? '#005bff' : '#111';
-              return (
-                <TouchableOpacity
-                  key={method.id}
-                  style={[styles.paymentCard, isSelected && styles.paymentCardActive]}
-                  onPress={() => setSelectedPaymentId(method.id)}
-                >
-                  {method.isIonIcon ? (
-                    <Ionicons name={method.icon as any} size={18} color={color} />
-                  ) : (
-                    <MaterialCommunityIcons name={method.icon as any} size={18} color={color} />
-                  )}
-                  <Text style={styles.paymentLogoText}>{method.title}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.paymentMethodsRow}>
+                {paymentMethods.map((method) => {
+                  const isSelected = selectedPaymentId === method.codeKey;
+                  const color = isSelected ? '#005bff' : '#111';
+                  const isCash = method.codeKey === 'PAYMENT_TYPE_CASH';
+                  return (
+                    <TouchableOpacity
+                      key={method.id}
+                      style={[styles.paymentCard, isSelected && styles.paymentCardActive]}
+                      onPress={() => setSelectedPaymentId(method.codeKey)}
+                    >
+                      <Ionicons name={isCash ? 'cash-outline' : 'card-outline'} size={18} color={color} />
+                      <Text style={[styles.paymentLogoText, { color }]}>{method.description}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
 
+              <TouchableOpacity
+                style={styles.payButton}
+                onPress={handlePayment}
+                disabled={paying}
+              >
+                {paying ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.payButtonText}>Оплатить</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
           <TouchableOpacity
-            style={styles.payButton}
-            onPress={() => alert(`Переход к оплате через ${selectedPaymentId}...`)}
+            style={[styles.payButton, { backgroundColor: '#eef3ff', marginTop: 20 }]}
+            onPress={() => navigation.navigate('MainTabs')}
           >
-            <Text style={styles.payButtonText}>Оплатить</Text>
+            <Text style={[styles.payButtonText, { color: '#005bff' }]}>Вернуться на главную</Text>
           </TouchableOpacity>
-        </View>
+        )}
 
         <View style={styles.locationSection}>
           <Text style={styles.locationTitle}>{order.pickupName}</Text>
@@ -148,6 +178,7 @@ export default function OrderSuccessScreen({ navigation, route }: { navigation: 
   );
 }
 
+// ... (Giữ nguyên styles cũ của bạn)
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: { height: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, borderBottomWidth: 1, borderColor: '#f0f0f0' },

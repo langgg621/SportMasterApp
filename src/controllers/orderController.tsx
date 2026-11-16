@@ -23,7 +23,10 @@ export const orderController = {
     const res = await apiClient.get(`/orders/${id}/confirmation`);
     return res.data;
   },
-
+  updateOrderStatus: async (orderId: string, status: number) => {
+    const res = await apiClient.put(`/orders/${orderId}/status`, { status });
+    return res;
+  },
   cancelOrder: async (id: string): Promise<void> => {
     await apiClient.put(`/orders/${id}/cancel`, {});
   }

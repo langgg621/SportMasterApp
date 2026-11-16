@@ -1,48 +1,69 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { userController } from '../controllers/userController';
-import { User } from '../models/user';
+import { User } from '../models';
+
+// Biến toàn cục để lưu user và các hàm lắng nghe
+let globalUser: User | null = null;
+let listeners: ((state: User | null) => void)[] = [];
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(globalUser);
   const [loading, setLoading] = useState(true);
 
-  // Lấy thông tin user từ API (nếu có token)
+  // Đăng ký lắng nghe sự thay đổi
+  useEffect(() => {
+    const listener = (newState: User | null) => setUser(newState);
+    listeners.push(listener);
+    
+    // Nếu globalUser chưa có, tức là app vừa mở lên -> Gọi API check token
+    if (globalUser === null) {
+      fetchUser();
+    } else {
+      setLoading(false);
+    }
+
+    return () => {
+      listeners = listeners.filter(l => l !== listener);
+    };
+  }, []);
+
+  const updateGlobalUser = (newUser: User | null) => {
+    globalUser = newUser;
+    listeners.forEach(listener => listener(newUser));
+  };
+
   const fetchUser = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem('@SportMaster:token');
       if (!token) {
-        setUser(null);
+        updateGlobalUser(null);
         return;
       }
       const data = await userController.getMe();
-      setUser(data);
+      updateGlobalUser(data);
     } catch (error) {
-      console.log('Chưa đăng nhập hoặc token hết hạn');
-      setUser(null);
+      updateGlobalUser(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  // Hàm Đăng nhập
+  // Cập nhật hàm login để lưu token và đổi state
   const login = async (email: string, pass: string) => {
     const res = await userController.login(email, pass);
-    setUser(res.data);
+    // res.data là thông tin user từ API trả về
+    updateGlobalUser(res.data); 
   };
 
-  // Hàm Đăng xuất
   const logout = async () => {
     await userController.logout();
-    setUser(null);
+    updateGlobalUser(null);
   };
-  // Thêm vào trong useAuth
-  const register = async (data: any) => {
-    const res = await userController.register(data);
-    setUser(res.data);};
-  return { user, loading, register,login, logout, refreshUser: fetchUser };
+  const register = async (data: any)=>{
+    const res= await userController.register(data);
+    updateGlobalUser(res.data);
+
+  }
+  return { user, loading, login, register, logout, refreshUser: fetchUser };
 };
