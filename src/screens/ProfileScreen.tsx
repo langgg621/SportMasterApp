@@ -57,14 +57,17 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
           NẾU CHƯA ĐĂNG NHẬP: HIỂN THỊ MÀN LOGIN PROMPT
           ========================================== */}
       {!user ? (
-        <View style={{ flex: 1, paddingBottom: 100 }}> {/* paddingBottom để không bị thanh Nav che */}
+        <View style={{ flex: 1, paddingBottom: 100 }}>
           <View style={styles.guestHeader}>
             <TouchableOpacity style={styles.locationBar}>
               <View style={styles.locationPin}>
                 <Ionicons name="location-sharp" size={13} color="#fff" />
               </View>
-              <Text style={styles.locationText} numberOfLines={1}>Томск, Буяновский переулок, 3А</Text>
-              <Ionicons name="chevron-forward" size={16} color="#888" />
+              <View>
+                <Text style={styles.locationText} numberOfLines={1}>Томск, Буяновский переулок, 3А</Text>
+                <Ionicons name="chevron-forward" size={16} color="#888" />
+              </View>
+              
             </TouchableOpacity>
 
             {/* Thẻ TouchableOpacity cho nút chat */}

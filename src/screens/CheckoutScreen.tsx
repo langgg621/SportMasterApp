@@ -71,7 +71,7 @@ export default function CheckoutScreen({ navigation, route }: { navigation: any;
       });
 
       await fetchCart();
-      navigation.navigate('PaymentScreen', { 
+      navigation.navigate('OrderSuccessScreen', { 
         orderId: order.id, 
         totalAmount: order.totalAmount,
       });
